@@ -1,5 +1,5 @@
-import locale
 import json
+import locale
 from pathlib import Path
 
 LANG_DIR = Path(__file__).parent
@@ -7,8 +7,12 @@ DEFAULT_LANG = "en"
 
 
 def get_system_lang():
-    lang, _ = locale.getdefaultlocale()
-    return (lang or DEFAULT_LANG).split("_")[0]
+    try:
+        locale.setlocale(locale.LC_ALL, "")
+        lang = locale.getlocale()[0]
+        return (lang or DEFAULT_LANG).split("_")[0]
+    except Exception:
+        return DEFAULT_LANG
 
 
 def load_translations(lang=None):

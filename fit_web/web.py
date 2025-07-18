@@ -12,15 +12,16 @@ import os
 
 from fit_acquisition.class_names import *
 from fit_configurations.controller.tabs.general.general import GeneralController
-from fit_scraper.scraper import AcquisitionStatus, Scraper
-from PySide6 import QtCore
-from PySide6.QtWebEngineCore import (
-    QWebEngineProfile,
-)
+from fit_scraper.scraper import AcquisitionStatus, Scraper, resolve_path
+from PySide6 import QtCore, QtGui
+from PySide6.QtWebEngineCore import QWebEnginePage, QWebEngineProfile
 
+from fit_web.lang import load_translations
+from fit_web.web_profile import WebEnginePage
 from fit_web.web_ui import (
     Ui_fit_web,
 )
+from fit_web.web_view import WebEngineView
 
 
 class Web(Scraper):
@@ -41,7 +42,13 @@ class Web(Scraper):
                 PACKETCAPTURE,
             ]
 
+            self.__translations = load_translations()
             self.__init_ui()
+            self.__enable_all()
+            self.__add_new_tab(
+                QtCore.QUrl(GeneralController().configuration["home_page_url"]),
+                "Homepage",
+            )
 
     def __init_ui(self):
         # HIDE STANDARD TITLE BAR
@@ -98,8 +105,6 @@ class Web(Scraper):
         self.ui.tabs.tabBarDoubleClicked.connect(self.__tab_open_doubleclick)
         self.ui.tabs.currentChanged.connect(self.__current_tab_changed)
         self.ui.tabs.tabCloseRequested.connect(self.__close_current_tab)
-
-        self.__enable_all()
 
     def mousePressEvent(self, event):
         self.dragPos = event.globalPosition().toPoint()
@@ -194,26 +199,163 @@ class Web(Scraper):
     def __stop_load_url(self):
         self.ui.tabs.currentWidget().stop()
 
+    def __load_progress(self, progress):
+        if progress == 100:
+            pass
+
+    def __page_on_loaded(self, tab_index, browser):
+        self.ui.tabs.setTabText(tab_index, browser.page().title())
+
+    def __update_urlbar(self, q, browser=None):
+        if browser != self.ui.tabs.currentWidget():
+            # If this signal is not from the current tab, ignore
+            return
+
+        if q.scheme() == "https":
+            # Secure padlock icon
+            pixmap = QtGui.QPixmap(
+                os.path.join(resolve_path("ui/images/toolbar"), "lock-close.png")
+            )
+            self.ui.httpsIcon.setPixmap(pixmap)
+
+        else:
+            # Insecure padlock icon
+            pixmap = QtGui.QPixmap(
+                os.path.join(resolve_path("ui/images/toolbar"), "lock-open.png")
+            )
+            self.ui.httpsIcon.setPixmap(pixmap)
+
+        self.ui.url_line_edit.setText(q.toString())
+        self.ui.url_line_edit.setCursorPosition(0)
+
+    def __allow_notifications(self, q):
+        feature = QWebEnginePage.Feature.Notifications
+        permission = QWebEnginePage.PermissionPolicy.PermissionGrantedByUser
+        self.web_engine_view.page().setFeaturePermission(q, feature, permission)
+
     # END NAVIGATION METHODS
 
     # START TAB METHODS
+    def __add_new_tab(self, qurl=None, label="Blank", page=None):
+        if qurl is None:
+            qurl = QtCore.QUrl("")
+
+        self.web_engine_view = WebEngineView()
+
+        user_agent = GeneralController().configuration["user_agent"]
+        self.web_engine_view.page().profile().setHttpUserAgent(
+            user_agent + " FreezingInternetTool/" + self._get_version()
+        )
+
+        if page is None:
+            page = WebEnginePage(self.web_engine_view)
+
+        page.certificateError.connect(page.handleCertificateError)
+
+        page.new_page_after_link_with_target_blank_attribute.connect(
+            lambda page: self.__add_new_tab(page=page)
+        )
+        self.web_engine_view.setPage(page)
+
+        self.web_engine_view.setUrl(qurl)
+
+        i = self.ui.tabs.addTab(self.web_engine_view, label)
+        if i == 0:
+            self.web_engine_view.set_download_request_handler()
+
+        self.ui.tabs.setCurrentIndex(i)
+
+        # More difficult! We only want to update the url when it's from the
+        # correct tab
+        self.web_engine_view.urlChanged.connect(
+            lambda qurl, browser=self.web_engine_view: self.__update_urlbar(
+                qurl, browser
+            )
+        )
+
+        self.web_engine_view.loadProgress.connect(self.__load_progress)
+
+        self.web_engine_view.loadFinished.connect(
+            lambda _, i=i, browser=self.web_engine_view: self.__page_on_loaded(
+                i, browser
+            )
+        )
+
+        self.web_engine_view.urlChanged.connect(
+            lambda qurl: self.__allow_notifications(qurl)
+        )
+
+        self.web_engine_view.downloadStarted.connect(
+            self.__handle_download_item_started
+        )
+
+        self.web_engine_view.downloadProgressChanged.connect(
+            self.__handle_download_item_progress
+        )
+
+        self.web_engine_view.downloadItemFinished.connect(
+            self.__handle_download_item_finished
+        )
+
+        if i == 0:
+            self.showMaximized()
+
     def __tab_open_doubleclick(self, i):
         if i == -1 and self.isEnabled():  # No tab under the click
-            self.add_new_tab()
+            self.__add_new_tab()
 
     def __current_tab_changed(self, i):
-        if self.tabs.currentWidget() is not None:
-            qurl = self.tabs.currentWidget().url()
-            self.__update_urlbar(qurl, self.tabs.currentWidget())
-            self.update_title(self.tabs.currentWidget())
+        if self.ui.tabs.currentWidget() is not None:
+            qurl = self.ui.tabs.currentWidget().url()
+            self.__update_urlbar(qurl, self.ui.tabs.currentWidget())
+            self.update_title(self.ui.tabs.currentWidget())
 
     def __close_current_tab(self, i):
-        if self.tabs.count() < 2:
+        if self.ui.tabs.count() < 2:
             return
 
         self.tabs.removeTab(i)
 
+    def update_title(self, browser):
+        if browser != self.ui.tabs.currentWidget():
+            # If this signal is not from the current tab, ignore
+            return
+
+        title = self.ui.tabs.currentWidget().page().title()
+        # Since 1.3.0 self.setWindowTitle("%s - Freezing Internet Tool" % title)
+
     # END TAB METHODS
+
+    # START DOWNLOAD METHODS
+    def __handle_download_item_started(self, download):
+        self._reset_acquisition_indicators(True)
+
+    def __handle_download_item_progress(self, bytes_received, bytes_total):
+        if bytes_total > 0:
+            download_percentage = int(bytes_received * 100 / bytes_total)
+            self.acquisition.progress_bar.setValue(download_percentage)
+
+    def __handle_download_item_finished(self, download):
+        filename = download.downloadFileName()
+        directory = download.downloadDirectory()
+        filename = os.path.join(directory, filename)
+        url = download.url()
+
+        for index in range(self.tabs.count()):
+            if self.ui.tabs.widget(index).url() == url:
+                self.ui.tabs.setCurrentIndex(index - 1)
+                self.ui.tabs.removeTab(index)
+
+        self.acquisition.status_bar.setText(
+            self.__translations["DOWNLOADED"] + ": " + filename
+        )
+        loop = QtCore.QEventLoop()
+        QtCore.QTimer.singleShot(2000, loop.quit)
+        loop.exec()
+
+        self._reset_acquisition_indicators(False)
+
+    # END DOWNLOAD METHODS
 
     def __enable_all(self):
         if self.acquisition_status in (
