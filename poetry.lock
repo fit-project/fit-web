@@ -481,11 +481,11 @@ sqlalchemy = "^2.0.40"
 type = "git"
 url = "https://github.com/fit-project/fit-configurations.git"
 reference = "main"
-resolved_reference = "11d29dbae9c61b4ce9b36a35b18ff4eadb08ed87"
+resolved_reference = "5fbd4c974581326ab396539f42cf497bd6e7e937"
 
 [[package]]
 name = "fit-scraper"
-version = "0.1.0"
+version = "0.2.0"
 description = "FIT Scraper Module"
 optional = false
 python-versions = ">=3.11,<3.13"
@@ -501,7 +501,7 @@ PySide6 = "6.9.0"
 type = "git"
 url = "https://github.com/fit-project/fit-scraper.git"
 reference = "main"
-resolved_reference = "c4d359c3096d483fbb5c82c72e2fab616b2f1eae"
+resolved_reference = "64ab212c0232a8b0191d1938e93f9b232e940f49"
 
 [[package]]
 name = "greenlet"

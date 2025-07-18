@@ -190,7 +190,7 @@ class Web(Scraper):
         )
 
     def __navigate_to_url(self):  # Does not receive the Url
-        q = QtCore.QUrl(self.url_line_edit.text())
+        q = QtCore.QUrl(self.ui.url_line_edit.text())
         if q.scheme() == "":
             q.setScheme("http")
 
