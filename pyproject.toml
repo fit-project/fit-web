@@ -1,12 +1,19 @@
 [tool.poetry]
 name = "fit-web"
 version = "0.1.0"
-description = ""
-authors = ["Fabio Zito <zitelog@gmail.com>"]
+description = "FIT WEB Scraper Module"
+authors = ["FIT Project"]
+license = "LGPL-3.0-or-later"
+packages = [
+    { include = "fit_web" }
+]
 
 [tool.poetry.dependencies]
-python = ">=3.11,<3.14"
-pyside6 = ">=6.6,<7.0"
+python = ">=3.11,<3.13"
+PySide6 = "6.9.0"
+
+
+fit-scraper = {git = "https://github.com/fit-project/fit-scraper.git", rev = "main"}
 
 [build-system]
 requires = ["poetry-core>=2.0.0,<3.0.0"]
