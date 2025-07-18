@@ -213,17 +213,14 @@ class Web(Scraper):
 
         if q.scheme() == "https":
             # Secure padlock icon
-            pixmap = QtGui.QPixmap(
-                os.path.join(resolve_path("ui/images/toolbar"), "lock-close.png")
+            self.ui.httpsIcon.setPixmap(
+                QtGui.QPixmap(":/images/toolbar/images/toolbar/lock-close.png")
             )
-            self.ui.httpsIcon.setPixmap(pixmap)
-
         else:
             # Insecure padlock icon
-            pixmap = QtGui.QPixmap(
-                os.path.join(resolve_path("ui/images/toolbar"), "lock-open.png")
+            self.ui.httpsIcon.setPixmap(
+                QtGui.QPixmap(":/images/toolbar/images/toolbar/lock-open.png")
             )
-            self.ui.httpsIcon.setPixmap(pixmap)
 
         self.ui.url_line_edit.setText(q.toString())
         self.ui.url_line_edit.setCursorPosition(0)
