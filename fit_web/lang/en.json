@@ -1,3 +1,7 @@
 {
-    "DOWNLOADED":"Downloaded"
+    "DOWNLOADED":"Downloaded",
+    "SAVE_PAGE":"Save page resources",
+    "SAVE_PAGE_STARTED": "Save page started",
+    "SAVE_PAGE_COMPLETED": "Save page completed",
+    "SAVE_PAGE_MESSAGE": "Save all resource of current page"
 }

@@ -1,3 +1,7 @@
 {
-    "DOWNLOADED":"Downloaded"
-}  
+    "DOWNLOADED": "Scaricato",
+    "SAVE_PAGE": "Salva risorse della pagina",
+    "SAVE_PAGE_STARTED": "Salvataggio della pagina avviato",
+    "SAVE_PAGE_COMPLETED": "Salvataggio della pagina completato",
+    "SAVE_PAGE_MESSAGE": "Salva tutte le risorse della pagina corrente"
+}

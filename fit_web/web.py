@@ -10,7 +10,7 @@
 import logging
 import os
 
-from fit_acquisition.class_names import *
+from fit_acquisition.class_names import class_names
 from fit_configurations.controller.tabs.general.general import GeneralController
 from fit_scraper.scraper import AcquisitionStatus, Scraper, resolve_path
 from PySide6 import QtCore, QtGui
@@ -27,19 +27,27 @@ from fit_web.web_view import WebEngineView
 class Web(Scraper):
     def __init__(self, wizard=None):
         logger = logging.getLogger("view.scrapers.web.web")
-        packages = []
+        packages = ["fit_web.tasks"]
         super().__init__(logger, "web", packages, wizard)
+
         if self.has_valid_case:
-            self.acquisition.start_tasks = [SCREENRECORDER, PACKETCAPTURE]
+
+            class_names.register("SAVE_PAGE", "TaskSavePage")
+
+            self.acquisition.start_tasks = [
+                class_names.SCREENRECORDER,
+                class_names.PACKETCAPTURE,
+            ]
             self.acquisition.stop_tasks = [
-                WHOIS,
-                NSLOOKUP,
-                HEADERS,
-                SSLKEYLOG,
-                SSLCERTIFICATE,
-                TRACEROUTE,
-                SCREENRECORDER,
-                PACKETCAPTURE,
+                class_names.WHOIS,
+                class_names.NSLOOKUP,
+                class_names.HEADERS,
+                class_names.SSLKEYLOG,
+                class_names.SSLCERTIFICATE,
+                class_names.TRACEROUTE,
+                class_names.SCREENRECORDER,
+                class_names.PACKETCAPTURE,
+                class_names.SAVE_PAGE,
             ]
 
             self.__translations = load_translations()
@@ -127,7 +135,6 @@ class Web(Scraper):
                     "type": "web",
                     "case_info": self.case_info,
                     "current_widget": self.ui.tabs.currentWidget(),
-                    "exclude_from_hash_calculation": "",
                     "window_pos": self.pos(),
                 }
 
