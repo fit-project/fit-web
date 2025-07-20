@@ -417,7 +417,7 @@ resolved_reference = "7401955a08b66164f49342f9b53a54389c50b1c3"
 
 [[package]]
 name = "fit-cases"
-version = "1.0.8"
+version = "1.0.9"
 description = "Modulo di configurazione per il progetto FIT"
 optional = false
 python-versions = ">=3.9,<3.13"
@@ -437,7 +437,7 @@ sqlalchemy = "^2.0.40"
 type = "git"
 url = "https://github.com/fit-project/fit-cases.git"
 reference = "main"
-resolved_reference = "8568dc4ec1b575abe7450c7ecafd8db74b044368"
+resolved_reference = "10eda5db1da6187665348aed2a23c488dc3964c6"
 
 [[package]]
 name = "fit-common"

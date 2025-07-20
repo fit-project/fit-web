@@ -127,6 +127,9 @@ class Web(Scraper):
     def __execute_start_tasks_flow(self):
         if self.create_acquisition_directory():
             if self.create_acquisition_subdirectory("screenshot"):
+                self.ui.tabs.currentWidget().set_acquisition_dir(
+                    self.acquisition_directory
+                )
                 self.acquisition.options = {
                     "acquisition_directory": self.acquisition_directory,
                     "screenshot_directory": os.path.join(
@@ -318,7 +321,7 @@ class Web(Scraper):
         if self.ui.tabs.count() < 2:
             return
 
-        self.tabs.removeTab(i)
+        self.ui.tabs.removeTab(i)
 
     def update_title(self, browser):
         if browser != self.ui.tabs.currentWidget():
@@ -345,7 +348,7 @@ class Web(Scraper):
         filename = os.path.join(directory, filename)
         url = download.url()
 
-        for index in range(self.tabs.count()):
+        for index in range(self.ui.tabs.count()):
             if self.ui.tabs.widget(index).url() == url:
                 self.ui.tabs.setCurrentIndex(index - 1)
                 self.ui.tabs.removeTab(index)
