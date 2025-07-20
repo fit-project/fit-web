@@ -12,7 +12,7 @@ import os
 
 from fit_acquisition.class_names import class_names
 from fit_configurations.controller.tabs.general.general import GeneralController
-from fit_scraper.scraper import AcquisitionStatus, Scraper, resolve_path
+from fit_scraper.scraper import AcquisitionStatus, Scraper
 from PySide6 import QtCore, QtGui
 from PySide6.QtWebEngineCore import QWebEnginePage, QWebEngineProfile
 
