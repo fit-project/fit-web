@@ -2,6 +2,13 @@
     "DOWNLOADED": "Scaricato",
     "SAVE_PAGE": "Salva risorse della pagina",
     "SAVE_PAGE_STARTED": "Salvataggio della pagina avviato",
-    "SAVE_PAGE_COMPLETED": "Salvataggio della pagina completato",
-    "SAVE_PAGE_MESSAGE": "Salva tutte le risorse della pagina corrente"
+    "SAVE_PAGE_COMPLETED": "{}: Salvataggio della pagina completato",
+    "SAVE_PAGE_MESSAGE": "Salva tutte le risorse della pagina corrente",
+    "SAVE_PAGE_ERROR_TITLE": "Errore salvataggio della pagina",
+    "SAVE_PAGE_ERROR_MESSAGE": "Impossibile salvare tutte le risorse della pagina corrente",
+    "FULL_PAGE_SCREENSHOT": "Acquisizione screenshot dell'intera pagina",
+    "FULL_PAGE_SCREENSHOT_STARTED": "Acquisizione dello screenshot dell'intera pagina avviato",
+    "FULL_PAGE_SCREENSHOT_COMPLETED": "{}: Acquisizione dello screenshot dell'intera pagina completato",
+    "SCREENSHOT_ERROR_TITLE": "Errore acquisizione screenshot",
+    "FULL_PAGE_SCREENSHOT_ERROR_MESSAGE": "Impossibile acquisire uno screenshot dell'intera pagina"
 }

@@ -7,6 +7,7 @@
 # -----
 ######
 
+import json
 import logging
 import os
 
@@ -17,6 +18,7 @@ from PySide6 import QtCore, QtGui
 from PySide6.QtWebEngineCore import QWebEnginePage, QWebEngineProfile
 
 from fit_web.lang import load_translations
+from fit_web.tasks.full_page_screenshot import TaskFullPageScreenShotWorker
 from fit_web.web_profile import WebEnginePage
 from fit_web.web_ui import (
     Ui_fit_web,
@@ -107,6 +109,11 @@ class Web(Scraper):
         )
         self.ui.stop_acquisition_button.clicked.connect(self.__execute_stop_tasks_flow)
 
+        # SET LOCAL ACQUISITON BUTTONS
+        self.ui.screenshot_full_page_button.clicked.connect(
+            self.__take_full_page_screenshot
+        )
+
         self.ui.tabs.clear()
 
         # Since 1.3.0 I disabled multitab managment, but I left these methods in case I wanted to re-enable multitab
@@ -184,6 +191,16 @@ class Web(Scraper):
 
     # END ACQUISITON EVENTS
 
+    # START LOCAL ACQUISITON METHODS
+    def __take_full_page_screenshot(self):
+        TaskFullPageScreenShotWorker().take_screenshot(
+            acquisition_directory=self.acquisition_directory,
+            current_widget=self.ui.tabs.currentWidget(),
+            screenshot_directory=os.path.join(self.acquisition_directory, "screenshot"),
+        )
+
+    # END LOCAL ACQUISITON METHODS
+
     # START NAVIGATION METHODS
     def __back(self):
         self.ui.tabs.currentWidget().back()
@@ -215,6 +232,50 @@ class Web(Scraper):
 
     def __page_on_loaded(self, tab_index, browser):
         self.ui.tabs.setTabText(tab_index, browser.page().title())
+
+        js_code = "JSON.stringify({scrollHeight: document.documentElement.scrollHeight, innerHeight: window.innerHeight, scrollY: window.scrollY})"
+
+        def debug_callback(result):
+            try:
+                data = json.loads(result)
+                print("[OK] scrollHeight:", data["scrollHeight"])
+                print("[OK] innerHeight:", data["innerHeight"])
+                print("[OK] scrollY:", data["scrollY"])
+                print("[OK] MainWindow Height:", self.height())
+                print("[OK] Tab Height:", self.ui.tabs.currentWidget().height())
+            except Exception as e:
+                print("[FAIL] Errore parsing JSON:", e)
+                print("[RAW JS result]:", result)
+
+        self.ui.tabs.currentWidget().page().runJavaScript(js_code, debug_callback)
+
+    def __handle_user_scroll(self, pos):
+        js_code = """
+        ({
+        scrollHeight: document.documentElement.scrollHeight,
+        innerHeight: window.innerHeight,
+        scrollY: window.scrollY
+        })
+        """
+
+        self.ui.tabs.currentWidget().page().runJavaScript(
+            js_code, self.update_height_live
+        )
+
+    def update_height_live(self, data):
+        if data is None:
+            print("[ERRORE] Nessun dato JS ricevuto.")
+            return
+
+        print("[DEBUG] JS result:", data)
+
+        scroll_height = data.get("scrollHeight", 0)
+        inner_height = data.get("innerHeight", 0)
+        scroll_y = data.get("scrollY", 0)
+
+        self.ui.statusbar.showMessage(
+            f"Pagina: {scroll_height}px | Vista: {inner_height}px | Scroll: {scroll_y}px"
+        )
 
     def __update_urlbar(self, q, browser=None):
         if browser != self.ui.tabs.currentWidget():
@@ -262,7 +323,10 @@ class Web(Scraper):
         page.new_page_after_link_with_target_blank_attribute.connect(
             lambda page: self.__add_new_tab(page=page)
         )
+
         self.web_engine_view.setPage(page)
+
+        page.scrollPositionChanged.connect(self.__handle_user_scroll)
 
         self.web_engine_view.setUrl(qurl)
 
@@ -400,7 +464,7 @@ class Web(Scraper):
     def __enable_screenshot_buttons(self, enable):
         self.ui.screenshot_visible_area_button.setEnabled(enable)
         self.ui.screenshot_selected_area_button.setEnabled(enable)
-        self.ui.screenshot_full_page_button.setEnabled(enable)
+        self.ui.screenshot_full_page_button.setEnabled(True)
 
     def __enable_navigation_buttons(self, enable):
         self.ui.back_button.setEnabled(enable)

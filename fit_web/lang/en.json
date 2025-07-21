@@ -2,6 +2,13 @@
     "DOWNLOADED":"Downloaded",
     "SAVE_PAGE":"Save page resources",
     "SAVE_PAGE_STARTED": "Save page started",
-    "SAVE_PAGE_COMPLETED": "Save page completed",
-    "SAVE_PAGE_MESSAGE": "Save all resource of current page"
+    "SAVE_PAGE_COMPLETED": "{}: Save page completed",
+    "SAVE_PAGE_MESSAGE": "Save all resource of current page",
+    "SAVE_PAGE_ERROR_TITLE": "Save page error",
+    "SAVE_PAGE_ERROR_MESSAGE": "Failed to save all resources of the current page",
+    "FULL_PAGE_SCREENSHOT": "Full Page Screenshot",
+    "FULL_PAGE_SCREENSHOT_STARTED": "Full page screenshot started",
+    "FULL_PAGE_SCREENSHOT_COMPLETED": "{}: Full page screenshot completed",
+    "FULL_PAGE_SCREENSHOT_ERROR_TITLE": "Full page screenshot error",
+    "FULL_PAGE_SCREENSHOT_ERROR_MESSAGE": "Failed to take a full page screenshot of the current page"
 }
