@@ -115,9 +115,11 @@ class TaskFullPageScreenShotWorker(TaskWorker):
     def start(self):
         try:
             self.started.emit()
+            print(self.options)
             self.take_screenshot(
                 acquisition_directory=self.options["acquisition_directory"],
                 current_widget=self.options["current_widget"],
+                screenshot_directory=self.options["screenshot_directory"],
                 is_task=True,
             )
             self.finished.emit()
