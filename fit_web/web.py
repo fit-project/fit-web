@@ -35,6 +35,7 @@ class Web(Scraper):
         if self.has_valid_case:
 
             class_names.register("SAVE_PAGE", "TaskSavePage")
+            class_names.register("FULL_PAGE_SCREENSHOT", "TaskFullPageScreenShot")
 
             self.acquisition.start_tasks = [
                 class_names.SCREENRECORDER,
@@ -51,6 +52,8 @@ class Web(Scraper):
                 class_names.PACKETCAPTURE,
                 class_names.SAVE_PAGE,
             ]
+
+            self.acquisition.external_tasks = [class_names.FULL_PAGE_SCREENSHOT]
 
             self.__translations = load_translations()
             self.__init_ui()
@@ -153,15 +156,22 @@ class Web(Scraper):
                 self.__enable_all()
 
     def __execute_stop_tasks_flow(self):
+        self.acquisition_status = AcquisitionStatus.STOPPED
 
         url = self.ui.tabs.currentWidget().url().toString()
         self.ui.tabs.currentWidget().page().reset_default_path()
         self.acquisition.options["url"] = url
         self.acquisition.options["current_widget"] = self.ui.tabs.currentWidget()
 
-        super().execute_stop_tasks_flow()
-
         self.__enable_all()
+        task = self.acquisition.tasks_manager.get_task("TaskFullPageScreenShot")
+        if task:
+            task.finished.connect(self.__on_take_full_page_screenshot)
+            task.options = self.acquisition.options
+            task.increment = self.acquisition.calculate_increment()
+            task.start()
+        else:
+            self.__on_take_full_page_screenshot()
 
     # END GLOBAL ACQUISITON METHODS
 
@@ -171,8 +181,11 @@ class Web(Scraper):
         return super().on_start_tasks_finished()
 
     def on_stop_tasks_finished(self):
-        self.acquisition.start_post_acquisition()
         print("finito di eseguire tutti i task della lista di Acquisition  stop_tasks")
+        return super().on_stop_tasks_finished()
+
+    def __on_take_full_page_screenshot(self):
+        return super().execute_stop_tasks_flow()
 
     def on_post_acquisition_finished(self):
         print("finito di eseguire tutti i task della lista di Acquisition post_tasks")
@@ -250,17 +263,7 @@ class Web(Scraper):
         self.ui.tabs.currentWidget().page().runJavaScript(js_code, debug_callback)
 
     def __handle_user_scroll(self, pos):
-        js_code = """
-        ({
-        scrollHeight: document.documentElement.scrollHeight,
-        innerHeight: window.innerHeight,
-        scrollY: window.scrollY
-        })
-        """
-
-        self.ui.tabs.currentWidget().page().runJavaScript(
-            js_code, self.update_height_live
-        )
+        pass
 
     def update_height_live(self, data):
         if data is None:
@@ -464,7 +467,7 @@ class Web(Scraper):
     def __enable_screenshot_buttons(self, enable):
         self.ui.screenshot_visible_area_button.setEnabled(enable)
         self.ui.screenshot_selected_area_button.setEnabled(enable)
-        self.ui.screenshot_full_page_button.setEnabled(True)
+        self.ui.screenshot_full_page_button.setEnabled(enable)
 
     def __enable_navigation_buttons(self, enable):
         self.ui.back_button.setEnabled(enable)

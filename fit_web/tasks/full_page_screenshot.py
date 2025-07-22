@@ -53,7 +53,7 @@ class TaskFullPageScreenShotWorker(TaskWorker):
             if not os.path.isdir(full_page_folder):
                 os.makedirs(full_page_folder)
 
-            start_point = current_widget.page().scrollPosition()
+            start_point_y = current_widget.page().scrollPosition().y()
 
             # move page on top
             current_widget.page().runJavaScript("window.scrollTo(0, 0);")
@@ -107,7 +107,10 @@ class TaskFullPageScreenShotWorker(TaskWorker):
 
             imgs_comb.save(whole_img_filename)
 
-            current_widget.page().runJavaScript("window.scrollTo(0, 0);")
+            if is_task is not True:
+                current_widget.page().runJavaScript(
+                    f"window.scrollTo(0, {start_point_y});"
+                )
 
     def start(self):
         try:

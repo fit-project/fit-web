@@ -366,7 +366,7 @@ wmi = ["wmi (>=1.5.1)"]
 
 [[package]]
 name = "fit-acquisition"
-version = "1.0.15"
+version = "1.0.16"
 description = "Utilities and base classes for content acquisition, shared across FIT scraper modules."
 optional = false
 python-versions = ">=3.9,<3.13"
@@ -394,7 +394,7 @@ xhtml2pdf = "^0.2.17"
 type = "git"
 url = "https://github.com/fit-project/fit-acquisition.git"
 reference = "main"
-resolved_reference = "4243de1ba0b474ab01d999491f5027135ec015d8"
+resolved_reference = "80c5af3cd2b30c1fc53835c301c5857ab92d7294"
 
 [[package]]
 name = "fit-assets"
@@ -485,7 +485,7 @@ resolved_reference = "5fbd4c974581326ab396539f42cf497bd6e7e937"
 
 [[package]]
 name = "fit-scraper"
-version = "0.2.1"
+version = "0.2.3"
 description = "FIT Scraper Module"
 optional = false
 python-versions = ">=3.11,<3.13"
@@ -501,7 +501,7 @@ PySide6 = "6.9.0"
 type = "git"
 url = "https://github.com/fit-project/fit-scraper.git"
 reference = "main"
-resolved_reference = "295ee7dad2cd62b02b6a18812d97d7b91fc8e5ae"
+resolved_reference = "675cbd37e3017baf7fe0a70bbc19eca2ccad645a"
 
 [[package]]
 name = "greenlet"
