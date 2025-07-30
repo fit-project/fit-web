@@ -10,9 +10,6 @@
 
 from PySide6 import QtCore, QtGui, QtWidgets
 
-from fit_web.lang import load_translations
-from fit_common.core.utils import get_version
-
 
 class Ui_fit_web(object):
     def setupUi(self, fit_web):

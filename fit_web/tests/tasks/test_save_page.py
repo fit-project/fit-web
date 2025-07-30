@@ -12,7 +12,7 @@ import logging.config
 import os
 
 import pytest
-from fit_common.core.utils import resolve_path
+from fit_common.core import resolve_path
 from fit_common.gui.utils import State, Status
 from fit_configurations.logger import LogConfigTools
 from PySide6.QtCore import QUrl

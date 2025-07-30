@@ -157,21 +157,27 @@ class Web(Scraper):
 
     def __execute_stop_tasks_flow(self):
         self.acquisition_status = AcquisitionStatus.STOPPED
+        self.acquisition.log_stop_message()
+        self._reset_acquisition_indicators(True)
+        self.__enable_all()
+
+        loop = QtCore.QEventLoop()
+        QtCore.QTimer.singleShot(500, loop.quit)
+        loop.exec()
 
         url = self.ui.tabs.currentWidget().url().toString()
         self.ui.tabs.currentWidget().page().reset_default_path()
         self.acquisition.options["url"] = url
         self.acquisition.options["current_widget"] = self.ui.tabs.currentWidget()
 
-        self.__enable_all()
         task = self.acquisition.tasks_manager.get_task("TaskFullPageScreenShot")
         if task:
-            task.finished.connect(self.__on_take_full_page_screenshot)
+            task.finished.connect(self.execute_stop_tasks_flow)
             task.options = self.acquisition.options
             task.increment = self.acquisition.calculate_increment()
             task.start()
         else:
-            self.__on_take_full_page_screenshot()
+            self.execute_stop_tasks_flow()
 
     # END GLOBAL ACQUISITON METHODS
 
@@ -184,8 +190,12 @@ class Web(Scraper):
         print("finito di eseguire tutti i task della lista di Acquisition  stop_tasks")
         return super().on_stop_tasks_finished()
 
-    def __on_take_full_page_screenshot(self):
-        return super().execute_stop_tasks_flow()
+    def execute_stop_tasks_flow(self):
+        self.tasks_info.show()
+        loop = QtCore.QEventLoop()
+        QtCore.QTimer.singleShot(500, loop.quit)
+        loop.exec()
+        self.acquisition.run_stop_tasks()
 
     def on_post_acquisition_finished(self):
         print("finito di eseguire tutti i task della lista di Acquisition post_tasks")
