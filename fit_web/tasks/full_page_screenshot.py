@@ -8,12 +8,12 @@
 ######
 
 import os
-import traceback
 from datetime import datetime
 
 import numpy as np
 from fit_acquisition.tasks.task import Task
 from fit_acquisition.tasks.task_worker import TaskWorker
+from fit_common.core import debug, log_exception
 from fit_common.gui.utils import Status
 from PIL import Image
 from PySide6 import QtCore
@@ -115,7 +115,6 @@ class TaskFullPageScreenShotWorker(TaskWorker):
     def start(self):
         try:
             self.started.emit()
-            print(self.options)
             self.take_screenshot(
                 acquisition_directory=self.options["acquisition_directory"],
                 current_widget=self.options["current_widget"],
@@ -124,7 +123,12 @@ class TaskFullPageScreenShotWorker(TaskWorker):
             )
             self.finished.emit()
         except Exception as e:
-            print(f"{str(e)}\n\n{traceback.format_exc()}")
+            debug(
+                "Exception during screenshot task:",
+                str(e),
+                context="ScreenshotTask.start",
+            )
+            log_exception(e, context="ScreenshotTask.start")
             self.error.emit(
                 {
                     "title": self.__translations["SCREENSHOT_ERROR_TITLE"],

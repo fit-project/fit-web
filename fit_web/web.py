@@ -12,6 +12,7 @@ import logging
 import os
 
 from fit_acquisition.class_names import class_names
+from fit_common.core import debug, log_exception
 from fit_configurations.controller.tabs.general.general import GeneralController
 from fit_scraper.scraper import AcquisitionStatus, Scraper
 from PySide6 import QtCore, QtGui
@@ -183,11 +184,17 @@ class Web(Scraper):
 
     # START ACQUISITON EVENTS
     def on_start_tasks_finished(self):
-        print("finito di eseguire tutti i task della lista di Acquisition start_tasks")
+        debug(
+            "Finished executing all tasks in the start_tasks list of Acquisition.",
+            context="Web.on_start_tasks_finished",
+        )
         return super().on_start_tasks_finished()
 
     def on_stop_tasks_finished(self):
-        print("finito di eseguire tutti i task della lista di Acquisition  stop_tasks")
+        debug(
+            "Finished executing all tasks in the stop_tasks list of Acquisition.",
+            context="Web.on_stop_tasks_finished",
+        )
         return super().on_stop_tasks_finished()
 
     def execute_stop_tasks_flow(self):
@@ -198,7 +205,10 @@ class Web(Scraper):
         self.acquisition.run_stop_tasks()
 
     def on_post_acquisition_finished(self):
-        print("finito di eseguire tutti i task della lista di Acquisition post_tasks")
+        debug(
+            "Finished executing all tasks in the Acquisition post_tasks list",
+            context="Web.on_post_acquisition_finished",
+        )
 
         profile = QWebEngineProfile.defaultProfile()
         profile.clearHttpCache()
@@ -261,14 +271,18 @@ class Web(Scraper):
         def debug_callback(result):
             try:
                 data = json.loads(result)
-                print("[OK] scrollHeight:", data["scrollHeight"])
-                print("[OK] innerHeight:", data["innerHeight"])
-                print("[OK] scrollY:", data["scrollY"])
-                print("[OK] MainWindow Height:", self.height())
-                print("[OK] Tab Height:", self.ui.tabs.currentWidget().height())
+                debug("scrollHeight:", data["scrollHeight"], context="Web.on_loaded")
+                debug("innerHeight:", data["innerHeight"], context="Web.on_loaded")
+                debug("scrollY:", data["scrollY"], context="Web.on_loaded")
+                debug("MainWindow Height:", self.height(), context="Web.on_loaded")
+                debug(
+                    "Tab Height:",
+                    self.ui.tabs.currentWidget().height(),
+                    context="Web.on_loaded",
+                )
             except Exception as e:
-                print("[FAIL] Errore parsing JSON:", e)
-                print("[RAW JS result]:", result)
+                debug("Errore parsing JSON:", e, context="Web.on_loaded")
+                debug("RAW JS result:", result, context="Web.on_loaded")
 
         self.ui.tabs.currentWidget().page().runJavaScript(js_code, debug_callback)
 
@@ -277,10 +291,12 @@ class Web(Scraper):
 
     def update_height_live(self, data):
         if data is None:
-            print("[ERRORE] Nessun dato JS ricevuto.")
+            debug("No JS data received.", data, context="Web.update_height_live")
+            try:
+                raise ValueError("JavaScript returned no data")
+            except Exception as e:
+                log_exception(e, context="Web.update_height_live")
             return
-
-        print("[DEBUG] JS result:", data)
 
         scroll_height = data.get("scrollHeight", 0)
         inner_height = data.get("innerHeight", 0)

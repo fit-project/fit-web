@@ -9,10 +9,10 @@
 
 
 import os
-import traceback
 
 from fit_acquisition.tasks.task import Task
 from fit_acquisition.tasks.task_worker import TaskWorker
+from fit_common.core import debug, log_exception
 from fit_common.gui.utils import Status
 
 from fit_web.lang import load_translations
@@ -40,7 +40,12 @@ class TaskSavePageWorker(TaskWorker):
             self.current_widget.save_resources(acquisition_page_folder)
 
         except Exception as e:
-            print(f"{str(e)}\n\n{traceback.format_exc()}")
+            debug(
+                "Exception during save page task:",
+                str(e),
+                context="TaskSavePageWorker.start",
+            )
+            log_exception(e, context="TaskSavePageWorker.start")
             self.error.emit(
                 {
                     "title": self.__translations["SAVE_PAGE_ERROR_TITLE"],
