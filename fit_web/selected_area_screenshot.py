@@ -8,15 +8,17 @@
 ######
 
 import time
-from PyQt6 import QtCore, QtGui, QtWidgets
+
+from fit_common.core import debug, get_platform, log_exception
 from PIL import ImageGrab
+from PySide6 import QtCore, QtGui, QtWidgets
 
 
 # Refer to https://github.com/harupy/snipping-tool
 class SnippingWidget(QtWidgets.QWidget):
     is_snipping = False
 
-    def __init__(self, parent=None):
+    def __init__(self, filename, parent=None):
         super(SnippingWidget, self).__init__()
         self.parent = parent
         self.setWindowFlags(
@@ -24,11 +26,14 @@ class SnippingWidget(QtWidgets.QWidget):
             | QtCore.Qt.WindowType.FramelessWindowHint
         )
 
-        self.setGeometry(0, 0, self.screen().size().width(), self.screen().size().height())
+        self.setGeometry(
+            0, 0, self.screen().size().width(), self.screen().size().height()
+        )
         self.begin = QtCore.QPoint()
         self.end = QtCore.QPoint()
         self.onSnippingCompleted = None
         self.scale_factor = self.screen().devicePixelRatio()
+        self.filename = filename
 
     def start(self):
         SnippingWidget.is_snipping = True
@@ -73,18 +78,47 @@ class SnippingWidget(QtWidgets.QWidget):
     def mouseReleaseEvent(self, event):
         SnippingWidget.is_snipping = False
         QtWidgets.QApplication.restoreOverrideCursor()
+
         x1 = min(self.begin.x(), self.end.x())
         y1 = min(self.begin.y(), self.end.y())
         x2 = max(self.begin.x(), self.end.x())
         y2 = max(self.begin.y(), self.end.y())
+
+        print(x1, y1, x2, y2)
+
         x1, y1, x2, y2 = self.apply_scaling_factor(x1, y1, x2, y2)
 
         self.repaint()
         QtWidgets.QApplication.processEvents()
-        if x1 != x2 and y1 != y2:
-            img = ImageGrab.grab(bbox=(x1, y1, x2, y2))
+
+        img = None
+
+        if x2 - x1 > 1 and y2 - y1 > 1:
+            try:
+
+                if get_platform() == "macos":
+                    screen = self.screen()
+                    pixmap = screen.grabWindow(0)
+
+                    rect = QtCore.QRect(x1, y1, x2 - x1, y2 - y1)
+                    cropped = pixmap.copy(rect)
+
+                    cropped.save(self.filename, "PNG")
+
+                else:
+                    img = ImageGrab.grab(bbox=(x1, y1, x2, y2))
+            except Exception as e:
+                debug(
+                    "Screenshot failed",
+                    str(e),
+                    context="SnippingWidget.mouseReleaseEvent",
+                )
+                log_exception(e, context="SnippingWidget.mouseReleaseEvent")
         else:
-            img = None
+            debug(
+                "Invalid rectangle selected, skipping screenshot",
+                context="SnippingWidget.mouseReleaseEvent",
+            )
 
         if self.onSnippingCompleted is not None:
             self.onSnippingCompleted(img)
@@ -100,20 +134,33 @@ class SnippingWidget(QtWidgets.QWidget):
 
 
 class SelectAreaScreenshot(QtCore.QObject):
-    finished = QtCore.pyqtSignal()  # give worker class a finished signal
+    finished = QtCore.Signal()  # give worker class a finished signal
 
     def __init__(self, filename, parent=None):
-        super(SelectAreaScreenshot, self, ).__init__(parent=parent)
+        super(
+            SelectAreaScreenshot,
+            self,
+        ).__init__(parent=parent)
         self.filename = filename
-        self.snippingWidget = SnippingWidget()
+        self.snippingWidget = SnippingWidget(filename=filename, parent=parent)
         self.snippingWidget.onSnippingCompleted = self.__on_snipping_completed
 
     def __on_snipping_completed(self, frame):
         if frame is None:
             self.__finished()
             return
-        time.sleep(1)
-        frame.save(self.filename)
+
+        try:
+            time.sleep(1)
+            frame.save(self.filename)
+        except Exception as e:
+            debug(
+                "Failed to save screenshot",
+                str(e),
+                context="SelectAreaScreenshot.__on_snipping_completed",
+            )
+            log_exception(e, context="SelectAreaScreenshot.__on_snipping_completed")
+
         self.__finished()
 
     def snip_area(self):

@@ -19,7 +19,11 @@ from PySide6 import QtCore, QtGui
 from PySide6.QtWebEngineCore import QWebEnginePage, QWebEngineProfile
 
 from fit_web.lang import load_translations
-from fit_web.tasks.full_page_screenshot import TaskFullPageScreenShotWorker
+from fit_web.selected_area_screenshot import SelectAreaScreenshot
+from fit_web.tasks.full_page_screenshot import (
+    TaskFullPageScreenShotWorker,
+    screenshot_filename,
+)
 from fit_web.web_profile import WebEnginePage
 from fit_web.web_ui import (
     Ui_fit_web,
@@ -114,6 +118,10 @@ class Web(Scraper):
         self.ui.stop_acquisition_button.clicked.connect(self.__execute_stop_tasks_flow)
 
         # SET LOCAL ACQUISITON BUTTONS
+        self.ui.screenshot_visible_area_button.clicked.connect(self.__take_screenshot)
+        self.ui.screenshot_selected_area_button.clicked.connect(
+            self.__take_screenshot_selected_area
+        )
         self.ui.screenshot_full_page_button.clicked.connect(
             self.__take_full_page_screenshot
         )
@@ -141,11 +149,12 @@ class Web(Scraper):
                 self.ui.tabs.currentWidget().set_acquisition_dir(
                     self.acquisition_directory
                 )
+                self.screenshot_directory = os.path.join(
+                    self.acquisition_directory, "screenshot"
+                )
                 self.acquisition.options = {
                     "acquisition_directory": self.acquisition_directory,
-                    "screenshot_directory": os.path.join(
-                        self.acquisition_directory, "screenshot"
-                    ),
+                    "screenshot_directory": self.screenshot_directory,
                     "type": "web",
                     "case_info": self.case_info,
                     "current_widget": self.ui.tabs.currentWidget(),
@@ -225,12 +234,43 @@ class Web(Scraper):
     # END ACQUISITON EVENTS
 
     # START LOCAL ACQUISITON METHODS
+    def __take_screenshot(self):
+        if self.screenshot_directory is not None:
+            self.setEnabled(False)
+            loop = QtCore.QEventLoop()
+            QtCore.QTimer.singleShot(500, loop.quit)
+            loop.exec()
+            filename = screenshot_filename(
+                self.screenshot_directory, self.ui.tabs.currentWidget().url().host()
+            )
+            self.ui.tabs.currentWidget().grab().save(filename)
+            self.setEnabled(True)
+
+    def __take_screenshot_selected_area(self):
+        if self.screenshot_directory is not None:
+            self.setEnabled(False)
+            loop = QtCore.QEventLoop()
+            QtCore.QTimer.singleShot(500, loop.quit)
+            loop.exec()
+            filename = screenshot_filename(
+                self.screenshot_directory,
+                "selected_" + self.ui.tabs.currentWidget().url().host(),
+            )
+            select_area = SelectAreaScreenshot(filename, self)
+            select_area.finished.connect(self.__enable_all)
+            select_area.snip_area()
+
     def __take_full_page_screenshot(self):
+        self.setEnabled(False)
+        loop = QtCore.QEventLoop()
+        QtCore.QTimer.singleShot(500, loop.quit)
+        loop.exec()
         TaskFullPageScreenShotWorker().take_screenshot(
             acquisition_directory=self.acquisition_directory,
             current_widget=self.ui.tabs.currentWidget(),
-            screenshot_directory=os.path.join(self.acquisition_directory, "screenshot"),
+            screenshot_directory=self.screenshot_directory,
         )
+        self.setEnabled(True)
 
     # END LOCAL ACQUISITON METHODS
 
