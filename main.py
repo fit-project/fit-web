@@ -10,8 +10,8 @@
 import argparse
 import sys
 
-from fit_common.core import DebugLevel, debug, set_debug_level
-from PySide6.QtWidgets import QApplication
+from fit_common.core import DebugLevel, debug, set_debug_level, set_gui_crash_handler
+from PySide6.QtWidgets import QApplication, QMessageBox
 
 from fit_web.web import Web
 
@@ -21,10 +21,20 @@ def parse_args():
     parser.add_argument(
         "--debug",
         choices=["none", "log", "verbose"],
-        default="none",  # <-- default aggiornato
+        default="none",
         help="Set the debug level (default: none)",
     )
     return parser.parse_args()
+
+
+def show_crash_dialog(error_message: str):
+    msg_box = QMessageBox()
+    msg_box.setIcon(QMessageBox.Critical)
+    msg_box.setWindowTitle("Application Error")
+    msg_box.setText("A fatal error occurred:")
+    msg_box.setDetailedText(error_message)
+    msg_box.setStandardButtons(QMessageBox.Ok)
+    msg_box.exec()
 
 
 def main():
@@ -38,6 +48,9 @@ def main():
     )
 
     app = QApplication(sys.argv)
+
+    set_gui_crash_handler(show_crash_dialog)
+
     window = Web()
     if window.has_valid_case:
         window.show()
