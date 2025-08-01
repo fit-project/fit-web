@@ -57,7 +57,7 @@ def main():
         sys.exit(app.exec())
     else:
         debug(
-            "User cancelled the case form. Nothing to display.", context="main fit_web"
+            "User cancelled the case form. Nothing to display.", context="Main.fit_web"
         )
         sys.exit(0)
 
