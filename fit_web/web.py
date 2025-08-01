@@ -12,7 +12,7 @@ import logging
 import os
 
 from fit_acquisition.class_names import class_names
-from fit_common.core import debug, get_context, log_exception
+from fit_common.core import debug, get_context, get_version, log_exception
 from fit_configurations.controller.tabs.general.general import GeneralController
 from fit_scraper.scraper import AcquisitionStatus, Scraper
 from PySide6 import QtCore, QtGui
@@ -35,6 +35,7 @@ class Web(Scraper):
     def __init__(self, wizard=None):
         logger = logging.getLogger("view.scrapers.web.web")
         packages = ["fit_web.tasks"]
+
         super().__init__(logger, "web", packages, wizard)
 
         if self.has_valid_case:
@@ -86,7 +87,7 @@ class Web(Scraper):
         self.ui.close_button.clicked.connect(self.close)
 
         # SET VERSION
-        self.ui.version.setText(self._get_version())
+        self.ui.version.setText(get_version())
 
         # CONFIGURATION BUTTON
         self.ui.configuration_button.clicked.connect(self.configuration_dialog)
@@ -381,7 +382,7 @@ class Web(Scraper):
 
         user_agent = GeneralController().configuration["user_agent"]
         self.web_engine_view.page().profile().setHttpUserAgent(
-            user_agent + " FreezingInternetTool/" + self._get_version()
+            user_agent + " FreezingInternetTool/" + get_version()
         )
 
         if page is None:
