@@ -9,7 +9,7 @@
 
 import time
 
-from fit_common.core import debug, get_platform, log_exception
+from fit_common.core import debug, get_context, get_platform, log_exception
 from PIL import ImageGrab
 from PySide6 import QtCore, QtGui, QtWidgets
 
@@ -111,13 +111,13 @@ class SnippingWidget(QtWidgets.QWidget):
                 debug(
                     "Screenshot failed",
                     str(e),
-                    context="SnippingWidget.mouseReleaseEvent",
+                    context=get_context(self),
                 )
-                log_exception(e, context="SnippingWidget.mouseReleaseEvent")
+                log_exception(e, context=get_context(self))
         else:
             debug(
                 "Invalid rectangle selected, skipping screenshot",
-                context="SnippingWidget.mouseReleaseEvent",
+                context=get_context(self),
             )
 
         if self.onSnippingCompleted is not None:
@@ -157,9 +157,9 @@ class SelectAreaScreenshot(QtCore.QObject):
             debug(
                 "Failed to save screenshot",
                 str(e),
-                context="SelectAreaScreenshot.__on_snipping_completed",
+                context=get_context(self),
             )
-            log_exception(e, context="SelectAreaScreenshot.__on_snipping_completed")
+            log_exception(e, context=get_context(self))
 
         self.__finished()
 

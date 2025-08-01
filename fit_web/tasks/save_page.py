@@ -12,7 +12,7 @@ import os
 
 from fit_acquisition.tasks.task import Task
 from fit_acquisition.tasks.task_worker import TaskWorker
-from fit_common.core import debug, log_exception
+from fit_common.core import debug, get_context, log_exception
 from fit_common.gui.utils import Status
 
 from fit_web.lang import load_translations
@@ -43,9 +43,9 @@ class TaskSavePageWorker(TaskWorker):
             debug(
                 "Exception during save page task:",
                 str(e),
-                context="TaskSavePageWorker.start",
+                context=get_context(self),
             )
-            log_exception(e, context="TaskSavePageWorker.start")
+            log_exception(e, context=get_context(self))
             self.error.emit(
                 {
                     "title": self.__translations["SAVE_PAGE_ERROR_TITLE"],

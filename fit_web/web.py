@@ -12,7 +12,7 @@ import logging
 import os
 
 from fit_acquisition.class_names import class_names
-from fit_common.core import debug, log_exception
+from fit_common.core import debug, get_context, log_exception
 from fit_configurations.controller.tabs.general.general import GeneralController
 from fit_scraper.scraper import AcquisitionStatus, Scraper
 from PySide6 import QtCore, QtGui
@@ -331,11 +331,11 @@ class Web(Scraper):
 
     def update_height_live(self, data):
         if data is None:
-            debug("No JS data received.", data, context="Web.update_height_live")
+            debug("No JS data received.", data, context=get_context(self))
             try:
                 raise ValueError("JavaScript returned no data")
             except Exception as e:
-                log_exception(e, context="Web.update_height_live")
+                log_exception(e, context=get_context(self))
             return
 
         scroll_height = data.get("scrollHeight", 0)

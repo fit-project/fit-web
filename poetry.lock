@@ -393,7 +393,7 @@ xhtml2pdf = "^0.2.17"
 type = "git"
 url = "https://github.com/fit-project/fit-acquisition.git"
 reference = "main"
-resolved_reference = "2a2a792aa7dab78fb49b81088d2fc8bb893440eb"
+resolved_reference = "cadb679e2e93e7bc023f3a341253ce5db48181cb"
 
 [[package]]
 name = "fit-assets"
@@ -457,7 +457,7 @@ windows-tools = {version = "^2.5.0", markers = "sys_platform == \"win32\""}
 type = "git"
 url = "https://github.com/fit-project/fit-common.git"
 reference = "main"
-resolved_reference = "a02e590417d24752171d7204da18435487cd5f88"
+resolved_reference = "fa4bb40bac14e9bcd9442e7827ba3d4c772e17ff"
 
 [[package]]
 name = "fit-configurations"
