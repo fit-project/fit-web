@@ -10,6 +10,8 @@
 
 from PySide6 import QtCore, QtGui, QtWidgets
 
+from fit_web.lang import load_translations
+
 
 class Ui_fit_web(object):
     def setupUi(self, fit_web):
@@ -842,32 +844,36 @@ class Ui_fit_web(object):
         QtCore.QMetaObject.connectSlotsByName(fit_web)
 
     def retranslateUi(self, fit_web):
-        _translate = QtCore.QCoreApplication.translate
-        fit_web.setWindowTitle(_translate("fit_web", "FIT Web Scraper"))
-        self.title_right_info.setText(_translate("fit_web", "Web Scraper"))
-        self.case_button.setToolTip(_translate("fit_web", "Case info"))
-        self.configuration_button.setToolTip(_translate("fit_web", "Configuration"))
-        self.back_button.setToolTip(_translate("fit_web", "Back to previous page"))
-        self.forward_button.setToolTip(_translate("fit_web", "Forward to next page"))
-        self.reload_button.setToolTip(_translate("fit_web", "Reload page"))
-        self.home_button.setToolTip(_translate("fit_web", "Go home"))
-        self.stop_button.setToolTip(_translate("fit_web", "Stop loading current page"))
+        self.__translations = load_translations()
+        fit_web.setWindowTitle(self.__translations["WINDOW_TITLE"])
+        self.title_right_info.setText(self.__translations["TITLE_RIGHT_INFO"])
+        self.case_button.setToolTip(self.__translations["CASE_BUTTON_TOOLTIP"])
+        self.configuration_button.setToolTip(
+            self.__translations["CONFIGURATION_BUTTON_TOOLTIP"]
+        )
+        self.back_button.setToolTip(self.__translations["BACK_BUTTON_TOOLTIP"])
+        self.forward_button.setToolTip(self.__translations["FORWARD_BUTTON_TOOLTIP"])
+        self.reload_button.setToolTip(self.__translations["RELOAD_BUTTON_TOOLTIP"])
+        self.home_button.setToolTip(self.__translations["HOME_BUTTON_TOOLTIP"])
+        self.stop_button.setToolTip(self.__translations["STOP_BUTTON_TOOLTIP"])
         self.start_acquisition_button.setToolTip(
-            _translate("fit_web", "Start acquisition")
+            self.__translations["START_ACQUISITION_BUTTON_TOOLTIP"]
         )
         self.stop_acquisition_button.setToolTip(
-            _translate("fit_web", "Stop acquisition")
+            self.__translations["STOP_ACQUISITION_BUTTON_TOOLTIP"]
         )
         self.screenshot_visible_area_button.setToolTip(
-            _translate("fit_web", "Take a screenshot on view area")
+            self.__translations["SCREENSHOT_VISIBLE_AREA_BUTTON_TOOLTIP"]
         )
         self.screenshot_selected_area_button.setToolTip(
-            _translate("fit_web", "Take a screenshot on the selected area")
+            self.__translations["SCREENSHOT_SELECTED_AREA_BUTTON_TOOLTIP"]
         )
         self.screenshot_full_page_button.setToolTip(
-            _translate("fit_web", "Take a full page screenshot")
+            self.__translations["SCREENSHOT_FULL_PAGE_BUTTON_TOOLTIP"]
         )
-        self.tabs.setTabText(self.tabs.indexOf(self.tab), _translate("fit_web", "Tab1"))
-        self.credits_label.setText(_translate("fit_web", "By: fit-project.org"))
-        self.status_message.setText(_translate("fit_web", "status message"))
-        self.version.setText(_translate("fit_web", "v1.0.3"))
+        self.tabs.setTabText(
+            self.tabs.indexOf(self.tab), self.__translations["TAB1_TEXT"]
+        )
+        self.credits_label.setText(self.__translations["CREDITS_LABEL"])
+        self.status_message.setText(self.__translations["STATUS_MESSAGE"])
+        self.version.setText(self.__translations["VERSION_LABEL"])

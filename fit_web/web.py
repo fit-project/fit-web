@@ -87,7 +87,7 @@ class Web(Scraper):
         self.ui.close_button.clicked.connect(self.close)
 
         # SET VERSION
-        self.ui.version.setText(get_version())
+        self.ui.version.setText(f"v{get_version()}")
 
         # CONFIGURATION BUTTON
         self.ui.configuration_button.clicked.connect(self.configuration_dialog)
