@@ -31,3 +31,11 @@ Install with [Poetry](https://python-poetry.org/):
 ```bash
 poetry install
 ```
+
+## Contributing
+1. Fork this repository.  
+2. Create a new branch (`git checkout -b feat/my-feature`).  
+3. Commit your changes using [Conventional Commits](https://www.conventionalcommits.org/en/v1.0.0/).  
+4. Submit a Pull Request describing your modification.
+
+---
