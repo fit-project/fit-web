@@ -33,7 +33,7 @@ from fit_web.web_view import WebEngineView
 
 class Web(Scraper):
     def __init__(self, wizard=None):
-        logger = logging.getLogger("view.scrapers.web.web")
+        logger = logging.getLogger("scrapers.web")
         packages = ["fit_web.tasks"]
 
         super().__init__(logger, "web", packages, wizard)
