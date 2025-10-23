@@ -8,9 +8,18 @@
 ######
 
 import argparse
+import ctypes
 import sys
 
-from fit_common.core import DebugLevel, debug, set_debug_level, set_gui_crash_handler
+from fit_common.core import (
+    DebugLevel,
+    debug,
+    get_platform,
+    resolve_path,
+    set_debug_level,
+    set_gui_crash_handler,
+)
+from PySide6 import QtGui
 from PySide6.QtWidgets import QApplication, QMessageBox
 
 from fit_web.web import Web
@@ -50,6 +59,12 @@ def main():
     app = QApplication(sys.argv)
 
     set_gui_crash_handler(show_crash_dialog)
+
+    if get_platform() == "win":
+        app_id = "org.fit-project.fit"
+        ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(app_id)
+
+    app.setWindowIcon(QtGui.QIcon(resolve_path("icon.ico")))
 
     window = Web()
     if window.has_valid_case:
