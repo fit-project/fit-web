@@ -11,6 +11,7 @@
     "FULL_PAGE_SCREENSHOT_COMPLETED": "{}: Acquisizione dello screenshot dell'intera pagina completato",
     "SCREENSHOT_ERROR_TITLE": "Errore acquisizione screenshot",
     "FULL_PAGE_SCREENSHOT_ERROR_MESSAGE": "Impossibile acquisire uno screenshot dell'intera pagina",
+    "MISMATCHED_JAVASCRIPT_RESULT_TOKEN_ERROR": "Token del risultato JavaScript non corrispondente (atteso {}, ottenuto {})",
     "WINDOW_TITLE": "Acquisizione Web FIT",
     "TITLE_RIGHT_INFO": "Web Scraper",
     "CASE_BUTTON_TOOLTIP": "Informazioni sul caso",

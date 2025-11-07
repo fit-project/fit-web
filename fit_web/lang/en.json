@@ -11,6 +11,7 @@
     "FULL_PAGE_SCREENSHOT_COMPLETED": "{}: Full page screenshot completed",
     "FULL_PAGE_SCREENSHOT_ERROR_TITLE": "Full page screenshot error",
     "FULL_PAGE_SCREENSHOT_ERROR_MESSAGE": "Failed to take a full page screenshot of the current page",
+    "MISMATCHED_JAVASCRIPT_RESULT_TOKEN_ERROR": "Mismatched JavaScript result token (expected {}, got {})",
     "WINDOW_TITLE": "FIT Web Scraper",
     "TITLE_RIGHT_INFO": "Web Scraper",
     "CASE_BUTTON_TOOLTIP": "Case info",

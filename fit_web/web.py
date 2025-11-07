@@ -7,16 +7,15 @@
 # -----
 ######
 
-import json
 import logging
 import os
 
 from fit_acquisition.class_names import class_names
-from fit_common.core import debug, get_context, get_version, log_exception
+from fit_common.core import debug, get_version
 from fit_configurations.controller.tabs.general.general import GeneralController
 from fit_scraper.scraper import AcquisitionStatus, Scraper
+from fit_webview_bridge import SystemWebView
 from PySide6 import QtCore, QtGui
-from PySide6.QtWebEngineCore import QWebEnginePage, QWebEngineProfile
 
 from fit_web.lang import load_translations
 from fit_web.selected_area_screenshot import SelectAreaScreenshot
@@ -24,11 +23,9 @@ from fit_web.tasks.full_page_screenshot import (
     TaskFullPageScreenShotWorker,
     screenshot_filename,
 )
-from fit_web.web_profile import WebEnginePage
 from fit_web.web_ui import (
     Ui_fit_web,
 )
-from fit_web.web_view import WebEngineView
 
 
 class Web(Scraper):
@@ -123,9 +120,11 @@ class Web(Scraper):
         self.ui.screenshot_selected_area_button.clicked.connect(
             self.__take_screenshot_selected_area
         )
+
         self.ui.screenshot_full_page_button.clicked.connect(
             self.__take_full_page_screenshot
         )
+        self.ui.screenshot_full_page_button.setEnabled(True)
 
         self.ui.tabs.clear()
 
@@ -220,8 +219,8 @@ class Web(Scraper):
             context="Web.on_post_acquisition_finished",
         )
 
-        profile = QWebEngineProfile.defaultProfile()
-        profile.clearHttpCache()
+        # profile = QWebEngineProfile.defaultProfile()
+        # profile.clearHttpCache()
 
         try:
             self.ui.tabs.currentWidget().saveResourcesFinished.disconnect()
@@ -236,16 +235,45 @@ class Web(Scraper):
 
     # START LOCAL ACQUISITON METHODS
     def __take_screenshot(self):
-        if self.screenshot_directory is not None:
-            self.setEnabled(False)
-            loop = QtCore.QEventLoop()
-            QtCore.QTimer.singleShot(500, loop.quit)
-            loop.exec()
-            filename = screenshot_filename(
-                self.screenshot_directory, self.ui.tabs.currentWidget().url().host()
-            )
-            self.ui.tabs.currentWidget().grab().save(filename)
+        if not self.screenshot_directory:
+            return
+
+        self.setEnabled(False)
+        view = self.ui.tabs.currentWidget()
+
+        # assicura che la cartella esista
+        os.makedirs(self.screenshot_directory, exist_ok=True)
+
+        # slot: firma corretta + filtro token (se fai più scatti ravvicinati)
+        def on_capture_finished(token, ok, filePath, error):
+            if token != getattr(self, "_last_capture_token", None):
+                return  # evento di un vecchio scatto, ignora
+
+            try:
+                view.captureFinished.disconnect(on_capture_finished)
+            except Exception:
+                pass
+
             self.setEnabled(True)
+
+            if ok:
+                print(f"[screenshot] saved → {filePath}")
+            else:
+                print(f"[screenshot] FAILED: {error}")
+
+            self._last_capture_token = None
+
+        # collega PRIMA di chiamare captureVisiblePage
+        view.captureFinished.connect(on_capture_finished)
+
+        # (facoltativo) piccola attesa per stabilizzare il layout
+        loop = QtCore.QEventLoop()
+        QtCore.QTimer.singleShot(100, loop.quit)
+        loop.exec()
+
+        filename = screenshot_filename(self.screenshot_directory, view.url().host())
+        # salva il token per filtrare il callback
+        self._last_capture_token = view.captureVisiblePage(filename)
 
     def __take_screenshot_selected_area(self):
         if self.screenshot_directory is not None:
@@ -300,53 +328,6 @@ class Web(Scraper):
     def __stop_load_url(self):
         self.ui.tabs.currentWidget().stop()
 
-    def __load_progress(self, progress):
-        if progress == 100:
-            pass
-
-    def __page_on_loaded(self, tab_index, browser):
-        self.ui.tabs.setTabText(tab_index, browser.page().title())
-
-        js_code = "JSON.stringify({scrollHeight: document.documentElement.scrollHeight, innerHeight: window.innerHeight, scrollY: window.scrollY})"
-
-        def debug_callback(result):
-            try:
-                data = json.loads(result)
-                debug("scrollHeight:", data["scrollHeight"], context="Web.on_loaded")
-                debug("innerHeight:", data["innerHeight"], context="Web.on_loaded")
-                debug("scrollY:", data["scrollY"], context="Web.on_loaded")
-                debug("MainWindow Height:", self.height(), context="Web.on_loaded")
-                debug(
-                    "Tab Height:",
-                    self.ui.tabs.currentWidget().height(),
-                    context="Web.on_loaded",
-                )
-            except Exception as e:
-                debug("Errore parsing JSON:", e, context="Web.on_loaded")
-                debug("RAW JS result:", result, context="Web.on_loaded")
-
-        self.ui.tabs.currentWidget().page().runJavaScript(js_code, debug_callback)
-
-    def __handle_user_scroll(self, pos):
-        pass
-
-    def update_height_live(self, data):
-        if data is None:
-            debug("No JS data received.", data, context=get_context(self))
-            try:
-                raise ValueError("JavaScript returned no data")
-            except Exception as e:
-                log_exception(e, context=get_context(self))
-            return
-
-        scroll_height = data.get("scrollHeight", 0)
-        inner_height = data.get("innerHeight", 0)
-        scroll_y = data.get("scrollY", 0)
-
-        self.ui.statusbar.showMessage(
-            f"Pagina: {scroll_height}px | Vista: {inner_height}px | Scroll: {scroll_y}px"
-        )
-
     def __update_urlbar(self, q, browser=None):
         if browser != self.ui.tabs.currentWidget():
             # If this signal is not from the current tab, ignore
@@ -366,77 +347,38 @@ class Web(Scraper):
         self.ui.url_line_edit.setText(q.toString())
         self.ui.url_line_edit.setCursorPosition(0)
 
-    def __allow_notifications(self, q):
-        feature = QWebEnginePage.Feature.Notifications
-        permission = QWebEnginePage.PermissionPolicy.PermissionGrantedByUser
-        self.web_engine_view.page().setFeaturePermission(q, feature, permission)
-
     # END NAVIGATION METHODS
 
     # START TAB METHODS
     def __add_new_tab(self, qurl=None, label="Blank", page=None):
+
         if qurl is None:
             qurl = QtCore.QUrl("")
 
-        self.web_engine_view = WebEngineView()
-
+        web_view = SystemWebView()
         user_agent = GeneralController().configuration["user_agent"]
-        self.web_engine_view.page().profile().setHttpUserAgent(
-            user_agent + " FreezingInternetTool/" + get_version()
+
+        web_view.setUserAgent(user_agent + " FreezingInternetTool/" + get_version())
+
+        # TODO devo aggiornarlo per sistema operativo sul DB
+        web_view.setUserAgent(
+            "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.4 Safari/605.1.15"
         )
 
-        if page is None:
-            page = WebEnginePage(self.web_engine_view)
-
-        page.certificateError.connect(page.handleCertificateError)
-
-        page.new_page_after_link_with_target_blank_attribute.connect(
-            lambda page: self.__add_new_tab(page=page)
+        web_view.urlChanged.connect(
+            lambda qurl, browser=web_view: self.__update_urlbar(qurl, browser)
         )
 
-        self.web_engine_view.setPage(page)
+        web_view.downloadStarted.connect(self.__handle_download_item_started)
+        web_view.downloadProgress.connect(self.__handle_download_item_progress)
+        web_view.downloadFinished.connect(self.__handle_download_item_finished)
 
-        page.scrollPositionChanged.connect(self.__handle_user_scroll)
-
-        self.web_engine_view.setUrl(qurl)
-
-        i = self.ui.tabs.addTab(self.web_engine_view, label)
-        if i == 0:
-            self.web_engine_view.set_download_request_handler()
-
+        web_view.setUrl(qurl)
+        i = self.ui.tabs.addTab(web_view, label)
         self.ui.tabs.setCurrentIndex(i)
 
-        # More difficult! We only want to update the url when it's from the
-        # correct tab
-        self.web_engine_view.urlChanged.connect(
-            lambda qurl, browser=self.web_engine_view: self.__update_urlbar(
-                qurl, browser
-            )
-        )
-
-        self.web_engine_view.loadProgress.connect(self.__load_progress)
-
-        self.web_engine_view.loadFinished.connect(
-            lambda _, i=i, browser=self.web_engine_view: self.__page_on_loaded(
-                i, browser
-            )
-        )
-
-        self.web_engine_view.urlChanged.connect(
-            lambda qurl: self.__allow_notifications(qurl)
-        )
-
-        self.web_engine_view.downloadStarted.connect(
-            self.__handle_download_item_started
-        )
-
-        self.web_engine_view.downloadProgressChanged.connect(
-            self.__handle_download_item_progress
-        )
-
-        self.web_engine_view.downloadItemFinished.connect(
-            self.__handle_download_item_finished
-        )
+        if i == 0:
+            self.showMaximized()
 
         if i == 0:
             self.showMaximized()
@@ -462,7 +404,7 @@ class Web(Scraper):
             # If this signal is not from the current tab, ignore
             return
 
-        title = self.ui.tabs.currentWidget().page().title()
+        # title = self.ui.tabs.currentWidget().page().title()
         # Since 1.3.0 self.setWindowTitle("%s - Freezing Internet Tool" % title)
 
     # END TAB METHODS
@@ -480,7 +422,7 @@ class Web(Scraper):
         filename = download.downloadFileName()
         directory = download.downloadDirectory()
         filename = os.path.join(directory, filename)
-        url = download.url()
+        url = download.downloadUrl()
 
         for index in range(self.ui.tabs.count()):
             if self.ui.tabs.widget(index).url() == url:
@@ -490,6 +432,7 @@ class Web(Scraper):
         self.acquisition.status_bar.setText(
             self.__translations["DOWNLOADED"] + ": " + filename
         )
+        self.acquisition.progress_bar.setValue(100)
         loop = QtCore.QEventLoop()
         QtCore.QTimer.singleShot(2000, loop.quit)
         loop.exec()

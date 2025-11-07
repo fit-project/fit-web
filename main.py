@@ -9,6 +9,7 @@
 
 import argparse
 import ctypes
+import platform
 import sys
 
 from fit_common.core import (
@@ -19,10 +20,23 @@ from fit_common.core import (
     set_debug_level,
     set_gui_crash_handler,
 )
+from packaging.version import Version
 from PySide6 import QtGui
 from PySide6.QtWidgets import QApplication, QMessageBox
 
 from fit_web.web import Web
+
+
+def _mac_ok():
+    if sys.platform != "darwin":
+        return True
+    ver = platform.mac_ver()[0]  # es. '14.5.1' su Sonoma
+    return ver and Version(ver) >= Version("11.3")
+
+
+if not _mac_ok():
+    # TODO - Finestra ad-hoc
+    raise SystemExit("FIT richiede macOS 11.3 o superiore.")
 
 
 def parse_args():
