@@ -7,18 +7,21 @@
 # -----
 ######
 
+import atexit
 import logging
 import os
 
 from fit_acquisition.class_names import class_names
-from fit_common.core import debug, get_version
+from fit_common.core import debug, get_context, get_version
+from fit_common.gui.error import Error
 from fit_configurations.controller.tabs.general.general import GeneralController
 from fit_scraper.scraper import AcquisitionStatus, Scraper
 from fit_webview_bridge import SystemWebView
-from PySide6 import QtCore, QtGui
+from PySide6 import QtCore, QtGui, QtWidgets
 
 from fit_web.lang import load_translations
 from fit_web.mitmproxy.runner import MitmproxyRunner
+from fit_web.os_proxy_setup import ProxyState, get_proxy_manager
 from fit_web.selected_area_screenshot import SelectAreaScreenshot
 from fit_web.tasks.full_page_screenshot import (
     TaskFullPageScreenShotWorker,
@@ -42,7 +45,6 @@ class Web(Scraper):
             class_names.register("FULL_PAGE_SCREENSHOT", "TaskFullPageScreenShot")
 
             self.acquisition.start_tasks = [
-                class_names.SCREENRECORDER,
                 class_names.PACKETCAPTURE,
             ]
             self.acquisition.stop_tasks = [
@@ -52,14 +54,15 @@ class Web(Scraper):
                 class_names.SSLKEYLOG,
                 class_names.SSLCERTIFICATE,
                 class_names.TRACEROUTE,
-                class_names.SCREENRECORDER,
                 class_names.PACKETCAPTURE,
-                class_names.SAVE_PAGE,
             ]
 
             self.acquisition.external_tasks = [class_names.FULL_PAGE_SCREENSHOT]
 
             self.mitm_runner = MitmproxyRunner(self)
+            self.proxy_manager = get_proxy_manager()
+            self.proxy_state: ProxyState | None = None
+            atexit.register(self.__restore_os_proxy)
 
             self.__translations = load_translations()
             self.__init_ui()
@@ -147,43 +150,93 @@ class Web(Scraper):
 
     # START GLOBAL ACQUISITON METHODS
     def __execute_start_tasks_flow(self):
+        debug("ℹ️ __execute_start_tasks_flow called", context=get_context(self))
         if self.create_acquisition_directory():
+            debug("ℹ️ acquisition directory created", context=get_context(self))
             if self.create_acquisition_subdirectory("screenshot"):
-                self.ui.tabs.currentWidget().set_acquisition_dir(
-                    self.acquisition_directory
-                )
-                self.screenshot_directory = os.path.join(
-                    self.acquisition_directory, "screenshot"
-                )
-                self.acquisition.options = {
-                    "acquisition_directory": self.acquisition_directory,
-                    "screenshot_directory": self.screenshot_directory,
-                    "type": "web",
-                    "case_info": self.case_info,
-                    "current_widget": self.ui.tabs.currentWidget(),
-                    "window_pos": self.pos(),
-                }
+                debug("ℹ️ screenshot subdirectory created", context=get_context(self))
+                if self.create_acquisition_subdirectory("downloads"):
+                    debug("ℹ️ downloads subdirectory created", context=get_context(self))
+                    self.ui.tabs.currentWidget().setDownloadDirectory(
+                        os.path.join(self.acquisition_directory, "downloads")
+                    )
+                    self.screenshot_directory = os.path.join(
+                        self.acquisition_directory, "screenshot"
+                    )
+                    self.acquisition.options = {
+                        "acquisition_directory": self.acquisition_directory,
+                        "screenshot_directory": self.screenshot_directory,
+                        "type": "web",
+                        "case_info": self.case_info,
+                        "current_widget": self.ui.tabs.currentWidget(),
+                        "window_pos": self.pos(),
+                    }
 
-                super().execute_start_tasks_flow()
+                    debug("ℹ️ configuring OS proxy", context=get_context(self))
+                    if not self.__configure_os_proxy():
+                        error_dlg = Error(
+                            QtWidgets.QMessageBox.Icon.Critical,
+                            self.__translations["OS_PROXY_CONFIG_ERROR_TITLE"],
+                            self.__translations["OS_PROXY_CONFIG_ERROR_MESSAGE"],
+                            "",
+                        )
+                        error_dlg.exec()
+                        return
 
-                self.__enable_all()
+                    debug("ℹ️ starting mitm capture", context=get_context(self))
+                    if not self.__start_mitm_capture():
+                        self.__restore_os_proxy()
+                        error_dlg = Error(
+                            QtWidgets.QMessageBox.Icon.Critical,
+                            self.__translations["MITM_PROXY_ERROR_TITLE"],
+                            self.__translations["MITM_PROXY_ERROR_MESSAGE"],
+                            "",
+                        )
+                        error_dlg.exec()
+
+                        return
+
+                    super().execute_start_tasks_flow()
+
+                    self.__enable_all()
 
     def __execute_stop_tasks_flow(self):
+        debug("ℹ️ __execute_stop_tasks_flow called", context=get_context(self))
         self.acquisition_status = AcquisitionStatus.STOPPED
         self.acquisition.log_stop_message()
         self._reset_acquisition_indicators(True)
         self.__enable_all()
 
+        debug("ℹ️ stopping mitm capture", context=get_context(self))
+        if not self.__stop_mitm_capture():
+            debug(
+                "❌ Unable to stop mitm capture cleanly",
+                context=get_context(self),
+            )
+
+        debug("ℹ️ restore configuring OS proxy", context=get_context(self))
+        if not self.__restore_os_proxy():
+            debug(
+                "❌ Unable to restore OS proxy cleanly",
+                context=get_context(self),
+            )
+
+        debug(
+            f"ℹ️ stop loop: thread={QtCore.QThread.currentThread()} "
+            f"app_thread={QtCore.QCoreApplication.instance().thread() if QtCore.QCoreApplication.instance() else None}",
+            context=get_context(self),
+        )
         loop = QtCore.QEventLoop()
         QtCore.QTimer.singleShot(500, loop.quit)
         loop.exec()
+        debug("ℹ️ stop loop: done", context=get_context(self))
 
         url = self.ui.tabs.currentWidget().url().toString()
-        self.ui.tabs.currentWidget().page().reset_default_path()
         self.acquisition.options["url"] = url
         self.acquisition.options["current_widget"] = self.ui.tabs.currentWidget()
-
+        debug("ℹ️ before start TaskFullPageScreenShot", context=get_context(self))
         task = self.acquisition.tasks_manager.get_task("TaskFullPageScreenShot")
+        debug("ℹ️ after start TaskFullPageScreenShot", context=get_context(self))
         if task:
             task.finished.connect(self.execute_stop_tasks_flow)
             task.options = self.acquisition.options
@@ -197,16 +250,17 @@ class Web(Scraper):
     # START ACQUISITON EVENTS
     def on_start_tasks_finished(self):
         debug(
-            "Finished executing all tasks in the start_tasks list of Acquisition.",
-            context="Web.on_start_tasks_finished",
+            "ℹ️ Finished executing all tasks in the start_tasks list of Acquisition.",
+            context=get_context(self),
         )
         return super().on_start_tasks_finished()
 
     def on_stop_tasks_finished(self):
         debug(
-            "Finished executing all tasks in the stop_tasks list of Acquisition.",
-            context="Web.on_stop_tasks_finished",
+            "ℹ️ Finished executing all tasks in the stop_tasks list of Acquisition.",
+            context=get_context(self),
         )
+
         return super().on_stop_tasks_finished()
 
     def execute_stop_tasks_flow(self):
@@ -221,14 +275,6 @@ class Web(Scraper):
             "Finished executing all tasks in the Acquisition post_tasks list",
             context="Web.on_post_acquisition_finished",
         )
-
-        # profile = QWebEngineProfile.defaultProfile()
-        # profile.clearHttpCache()
-
-        try:
-            self.ui.tabs.currentWidget().saveResourcesFinished.disconnect()
-        except TypeError:
-            pass
 
         super().on_post_acquisition_finished()
 
@@ -445,6 +491,7 @@ class Web(Scraper):
     # END DOWNLOAD METHODS
 
     def __enable_all(self):
+        # TODO devo bloccare anche close e minize
         if self.acquisition_status in (
             AcquisitionStatus.UNSTARTED,
             AcquisitionStatus.FINISHED,
@@ -490,6 +537,56 @@ class Web(Scraper):
         self.ui.url_line_edit.setEnabled(enable)
         self.ui.stop_button.setEnabled(enable)
 
+    def __restore_os_proxy(self) -> bool:
+        if self.proxy_manager and self.proxy_state:
+            if not hasattr(self.proxy_manager, "restore"):
+                return False
+            self.proxy_manager.restore(self.proxy_state)
+        self.proxy_manager = None
+        self.proxy_state = None
+        return True
+
+    def __configure_os_proxy(self) -> bool:
+        debug("ℹ️ __configure_os_proxy called", context=get_context(self))
+        if self.proxy_manager is None:
+            self.proxy_manager = get_proxy_manager()
+        if self.proxy_manager is None:
+            debug("❌ Proxy manager not available", context=get_context(self))
+            return False
+        if not hasattr(self.proxy_manager, "snapshot") or not hasattr(
+            self.proxy_manager, "enable_capture_proxy"
+        ):
+            debug(
+                "❌ Proxy manager missing required methods", context=get_context(self)
+            )
+            return False
+
+        self.proxy_state = self.proxy_manager.snapshot()
+        if self.proxy_state is None:
+            debug("❌ Proxy snapshot failed", context=get_context(self))
+            self.proxy_manager = None
+            return False
+
+        self.proxy_manager.enable_capture_proxy("127.0.0.1", 8080)
+        debug("✅ Proxy enabled for capture", context=get_context(self))
+        return True
+
+    def __start_mitm_capture(self) -> bool:
+        if self.mitm_runner.start_capture():
+            debug("✅ Mitm capture started", context=get_context(self))
+            return True
+        debug("❌ Mitm capture start failed", context=get_context(self))
+        return False
+
+    def __stop_mitm_capture(self) -> bool:
+
+        if self.mitm_runner.stop_capture():
+            debug("✅ Mitm capture stopped", context=get_context(self))
+            return True
+        debug("❌ Mitm capture stop failed", context=get_context(self))
+        return False
+
     def closeEvent(self, event):
+        # TODO da verificare se va bene così con wizard oppure se sta acquisendo
         self.mitm_runner.stop_by_pid()
         return super().closeEvent(event)

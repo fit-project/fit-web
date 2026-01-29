@@ -29,5 +29,9 @@
     "TAB1_TEXT": "Tab1",
     "CREDITS_LABEL": "By: fit-project.org",
     "STATUS_MESSAGE": "status message",
-    "VERSION_LABEL": "v1.0.3"
+    "VERSION_LABEL": "v1.0.3",
+    "OS_PROXY_CONFIG_ERROR_TITLE": "OS Proxy Configuration Error",
+    "OS_PROXY_CONFIG_ERROR_MESSAGE": "Unable to configure OS proxy; aborting acquisition start",
+    "MITM_PROXY_ERROR_TITLE": "MITM Proxy Error",
+    "MITM_PROXY_ERROR_MESSAGE": "Unable to start mitm capture; restoring OS proxy and aborting"
 }

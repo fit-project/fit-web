@@ -64,6 +64,12 @@ class MitmproxyRunner:
                 self._clear_pid()
             except ProcessLookupError:
                 self._clear_pid()
+            except PermissionError:
+                debug(
+                    f"❌ mitmproxy already running (pid={existing_pid}) but no permission to signal it",
+                    context=get_context(self),
+                )
+                return None
 
         log_file = None
         if os.environ.get(FIT_DEBUG_ENABLED) == "1":

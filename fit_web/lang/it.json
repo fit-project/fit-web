@@ -29,5 +29,9 @@
     "TAB1_TEXT": "Tab1",
     "CREDITS_LABEL": "By: fit-project.org",
     "STATUS_MESSAGE": "status message",
-    "VERSION_LABEL": "v1.0.3"
+    "VERSION_LABEL": "v1.0.3",
+    "OS_PROXY_CONFIG_ERROR_TITLE": "Errore di configurazione del proxy del sistema operativo",
+    "OS_PROXY_CONFIG_ERROR_MESSAGE": "Impossibile configurare il proxy del sistema operativo; interruzione dell'avvio dell'acquisizione",
+    "MITM_PROXY_ERROR_TITLE": "Errore MITM Proxy",
+    "MITM_PROXY_ERROR_MESSAGE": "Impossibile avviare la cattura mitm; ripristino del proxy del sistema operativo e interruzione dell'acquisizione"
 }

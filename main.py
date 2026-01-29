@@ -36,6 +36,8 @@ from fit_web.mitmproxy.runner import MitmproxyRunner
 from fit_web.web import Web
 
 
+# Todo: devo realizzare delle dialog pysyde che sono però al di fuori di run_gui
+# o in alternativa delle dialog di sistema dito Applescript
 def _log_bootstrap_result(result: BootstrapResult) -> None:
     if result.signal == BootstrapSignal.OK:
         debug("✅ Bootstrap completed", context="Main.fit_web")
@@ -57,7 +59,7 @@ def _mac_ok():
 
 
 if not _mac_ok():
-    # TODO - Finestra ad-hoc
+    # TODO - Finestra ad-hoc leggi TODO sopra
     raise SystemExit("FIT richiede macOS 11.3 o superiore.")
 
 
@@ -73,6 +75,7 @@ def parse_args():
 
 
 def show_crash_dialog(error_message: str):
+    # TODO - Finestra ad-hoc leggi TODO sopra
     msg_box = QMessageBox()
     msg_box.setIcon(QMessageBox.Critical)
     msg_box.setWindowTitle("Application Error")
