@@ -18,6 +18,7 @@ from fit_webview_bridge import SystemWebView
 from PySide6 import QtCore, QtGui
 
 from fit_web.lang import load_translations
+from fit_web.mitmproxy.runner import MitmproxyRunner
 from fit_web.selected_area_screenshot import SelectAreaScreenshot
 from fit_web.tasks.full_page_screenshot import (
     TaskFullPageScreenShotWorker,
@@ -57,6 +58,8 @@ class Web(Scraper):
             ]
 
             self.acquisition.external_tasks = [class_names.FULL_PAGE_SCREENSHOT]
+
+            self.mitm_runner = MitmproxyRunner(self)
 
             self.__translations = load_translations()
             self.__init_ui()
@@ -486,3 +489,7 @@ class Web(Scraper):
         self.ui.home_button.setEnabled(enable)
         self.ui.url_line_edit.setEnabled(enable)
         self.ui.stop_button.setEnabled(enable)
+
+    def closeEvent(self, event):
+        self.mitm_runner.stop_by_pid()
+        return super().closeEvent(event)

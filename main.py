@@ -32,6 +32,7 @@ from packaging.version import Version
 from PySide6 import QtGui
 from PySide6.QtWidgets import QApplication, QMessageBox
 
+from fit_web.mitmproxy.runner import MitmproxyRunner
 from fit_web.web import Web
 
 
@@ -93,9 +94,12 @@ def _run_gui() -> int:
     app.setWindowIcon(QtGui.QIcon(resolve_path("icon.ico")))
 
     window = Web()
+    mitm_runner = MitmproxyRunner(window)
     if window.has_valid_case:
         window.show()
         return app.exec()
+
+    mitm_runner.stop_by_pid()
     debug(
         "❌ User cancelled the case form. Nothing to display.", context="Main.fit_web"
     )
@@ -103,6 +107,11 @@ def _run_gui() -> int:
 
 
 def main() -> int:
+    if os.environ.get("FIT_MITM_LAUNCH") == "1":
+        from mitmproxy.tools.main import mitmdump
+
+        return mitmdump()
+
     if get_platform() == "macos" and os.environ.get("FIT_ASKPASS_DIALOG") == "1":
         from fit_bootstrap.macos.askpass_dialog import main as askpass_main
 
@@ -132,12 +141,22 @@ def main() -> int:
         return _run_gui()
 
     bootstrap = Bootstrap(debug_enabled=args.debug != "none")
+
+    mitm_runner = MitmproxyRunner()
+    if not mitm_runner.start():
+        debug("❌ mitmproxy start failed")
+        return 1
+
     preflight_result = bootstrap._dispatch(
         on_signal=_log_bootstrap_result,
         argv=list(sys.argv),
         stage_env=STAGE_ENV,
         stage_gui=STAGE_GUI,
     )
+
+    if preflight_result.code != 0:
+        mitm_runner.stop_by_pid()
+
     return preflight_result.code
 
 
