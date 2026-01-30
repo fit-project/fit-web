@@ -9,11 +9,17 @@
 
 
 import os
+import shutil
+import tempfile
+import zipfile
 
 from fit_acquisition.tasks.task import Task
 from fit_acquisition.tasks.task_worker import TaskWorker
+from fit_bootstrap.constants import FIT_USER_APP_PATH
 from fit_common.core import debug, get_context, log_exception
 from fit_common.gui.utils import Status
+from har2warc.har2warc import har2warc
+from wacz import main as wacz_main
 
 from fit_web.lang import load_translations
 
@@ -36,8 +42,10 @@ class TaskSavePageWorker(TaskWorker):
             )
             if not os.path.isdir(acquisition_page_folder):
                 os.makedirs(acquisition_page_folder)
-            self.current_widget.saveResourcesFinished.connect(self.__finished)
-            self.current_widget.save_resources(acquisition_page_folder)
+            debug("ℹ️ Starting WACZ build", context=get_context(self))
+            self._build_wacz()
+            debug("✅ WACZ build completed", context=get_context(self))
+            self.finished.emit()
 
         except Exception as e:
             debug(
@@ -54,8 +62,53 @@ class TaskSavePageWorker(TaskWorker):
                 }
             )
 
-    def __finished(self):
-        self.finished.emit()
+    def _get_capture_har_path(self) -> str | None:
+        base_path = os.environ.get(FIT_USER_APP_PATH)
+        if not base_path:
+            return None
+        return os.path.join(base_path, "mitmproxy", "capture.har")
+
+    def _build_wacz(self) -> None:
+        har_path = self._get_capture_har_path()
+        if not har_path or not os.path.exists(har_path):
+            raise FileNotFoundError("capture.har not found")
+        debug(f"ℹ️ capture.har: {har_path}", context=get_context(self))
+        with tempfile.TemporaryDirectory(
+            prefix="fit_wacz_", dir=self.acquisition_directory
+        ) as temp_dir:
+            debug(f"ℹ️ wacz temp_dir: {temp_dir}", context=get_context(self))
+            warc_path = os.path.join(temp_dir, "data.warc.gz")
+            debug("ℹ️ Converting HAR to WARC", context=get_context(self))
+            har2warc(
+                har_path,
+                warc_path,
+                gzip=True,
+                filename=warc_path,
+                rec_title="FIT capture",
+            )
+            debug(f"✅ WARC created: {warc_path}", context=get_context(self))
+
+            wacz_path = os.path.join(temp_dir, "archive.wacz")
+            debug("ℹ️ Creating WACZ archive", context=get_context(self))
+            result = wacz_main.main(
+                [
+                    "create",
+                    warc_path,
+                    "-o",
+                    wacz_path,
+                    "--detect-pages",
+                    "--text",
+                ]
+            )
+            if result not in (0, None):
+                raise RuntimeError(f"WACZ creation failed (code={result})")
+            debug(f"✅ WACZ created: {wacz_path}", context=get_context(self))
+
+            final_wacz = os.path.join(
+                self.acquisition_directory, "archive.wacz"
+            )
+            shutil.copyfile(wacz_path, final_wacz)
+            debug(f"✅ WACZ saved: {final_wacz}", context=get_context(self))
 
 
 class TaskSavePage(Task):

@@ -55,6 +55,7 @@ class Web(Scraper):
                 class_names.SSLCERTIFICATE,
                 class_names.TRACEROUTE,
                 class_names.PACKETCAPTURE,
+                class_names.SAVE_PAGE,
             ]
 
             self.acquisition.external_tasks = [class_names.FULL_PAGE_SCREENSHOT]

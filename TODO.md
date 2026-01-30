@@ -2,6 +2,19 @@ aggiunti log in:
 scraper.py
 privilege.py
 zip_and_remove_folder.py completamente modificato
+headers.py
+
+
+riportate modifiche:
+
+Ho aggiornato headers.py per:
+
+aggiungere un User‑Agent “browser-like”
+fare fallback HEAD se il GET ritorna 403
+in caso di 403 persistente, ritornare comunque gli headers (senza far fallire il task)
+Modifica in:
+
+
 
 
 

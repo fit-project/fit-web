@@ -82,6 +82,7 @@ class MitmproxyRunner:
                     )
                     return None
                 log_path = Path(log_base) / "mitmproxy.log"
+
                 if log_path.exists():
                     log_path.unlink()
                 log_file = log_path.open("a")
