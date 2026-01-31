@@ -13,6 +13,7 @@ import shutil
 import tempfile
 import zipfile
 
+from multipart import ParserError
 from fit_acquisition.tasks.task import Task
 from fit_acquisition.tasks.task_worker import TaskWorker
 from fit_bootstrap.constants import FIT_USER_APP_PATH
@@ -90,16 +91,17 @@ class TaskSavePageWorker(TaskWorker):
 
             wacz_path = os.path.join(temp_dir, "archive.wacz")
             debug("ℹ️ Creating WACZ archive", context=get_context(self))
-            result = wacz_main.main(
-                [
-                    "create",
-                    warc_path,
-                    "-o",
-                    wacz_path,
-                    "--detect-pages",
-                    "--text",
-                ]
-            )
+            try:
+                result = self._create_wacz(warc_path, wacz_path)
+            except ParserError as e:
+                debug(
+                    "⚠️ WACZ indexing failed parsing multipart; retrying without POST append",
+                    str(e),
+                    context=get_context(self),
+                )
+                result = self._create_wacz(
+                    warc_path, wacz_path, disable_post_append=True
+                )
             if result not in (0, None):
                 raise RuntimeError(f"WACZ creation failed (code={result})")
             debug(f"✅ WACZ created: {wacz_path}", context=get_context(self))
@@ -109,6 +111,34 @@ class TaskSavePageWorker(TaskWorker):
             )
             shutil.copyfile(wacz_path, final_wacz)
             debug(f"✅ WACZ saved: {final_wacz}", context=get_context(self))
+
+    def _create_wacz(
+        self, warc_path: str, wacz_path: str, disable_post_append: bool = False
+    ) -> int | None:
+        args = [
+            "create",
+            warc_path,
+            "-o",
+            wacz_path,
+            "--detect-pages",
+            "--text",
+        ]
+        if not disable_post_append:
+            return wacz_main.main(args)
+
+        from wacz.waczindexer import WACZIndexer as BaseWACZIndexer
+
+        class NoPostAppendWACZIndexer(BaseWACZIndexer):
+            def __init__(self, *init_args, **init_kwargs):
+                init_kwargs["post_append"] = False
+                super().__init__(*init_args, **init_kwargs)
+
+        original = wacz_main.WACZIndexer
+        wacz_main.WACZIndexer = NoPostAppendWACZIndexer
+        try:
+            return wacz_main.main(args)
+        finally:
+            wacz_main.WACZIndexer = original
 
 
 class TaskSavePage(Task):
