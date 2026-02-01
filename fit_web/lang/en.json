@@ -33,5 +33,9 @@
     "OS_PROXY_CONFIG_ERROR_TITLE": "OS Proxy Configuration Error",
     "OS_PROXY_CONFIG_ERROR_MESSAGE": "Unable to configure OS proxy; aborting acquisition start",
     "MITM_PROXY_ERROR_TITLE": "MITM Proxy Error",
-    "MITM_PROXY_ERROR_MESSAGE": "Unable to start mitm capture; restoring OS proxy and aborting"
+    "MITM_PROXY_ERROR_MESSAGE": "Unable to start mitm capture; restoring OS proxy and aborting",
+    "OS_VERSION_ERROR_DIALOG_TITLE": "Unsupported {} Version",
+    "MACOS_VERSION_ERROR_DIALOG_MESSAGE": "FIT richiede macOS 11.3 o superiore. La versione attuale è {}.",
+    "APPLICATION_ERROR_DIALOG_TITLE": "Application Error",
+    "APPLICATION_ERROR_DIALOG_MESSAGE": "A fatal error occurred:"
 }

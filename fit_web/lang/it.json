@@ -33,5 +33,9 @@
     "OS_PROXY_CONFIG_ERROR_TITLE": "Errore di configurazione del proxy del sistema operativo",
     "OS_PROXY_CONFIG_ERROR_MESSAGE": "Impossibile configurare il proxy del sistema operativo; interruzione dell'avvio dell'acquisizione",
     "MITM_PROXY_ERROR_TITLE": "Errore MITM Proxy",
-    "MITM_PROXY_ERROR_MESSAGE": "Impossibile avviare la cattura mitm; ripristino del proxy del sistema operativo e interruzione dell'acquisizione"
+    "MITM_PROXY_ERROR_MESSAGE": "Impossibile avviare la cattura mitm; ripristino del proxy del sistema operativo e interruzione dell'acquisizione",
+    "OS_VERSION_ERROR_DIALOG_TITLE": "Versione {} non supportata",
+    "MACOS_VERSION_ERROR_DIALOG_MESSAGE": "FIT richiede macOS 11.3 o superiore. La versione attuale è {}.",
+    "APPLICATION_ERROR_DIALOG_TITLE": "Errore dell'applicazione",
+    "APPLICATION_ERROR_DIALOG_MESSAGE": "Si è verificato un errore fatale:"
 }

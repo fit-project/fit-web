@@ -17,6 +17,7 @@ import sys
 from fit_bootstrap.app_lock import acquire_app_lock, release_app_lock
 from fit_bootstrap.bootstrap import Bootstrap
 from fit_bootstrap.constants import STAGE_ENV, STAGE_GUI
+from fit_bootstrap.lang import load_translations as bootstrap_load_translations
 from fit_bootstrap.signals import BootstrapResult, BootstrapSignal
 from fit_common.core import (
     DebugLevel,
@@ -28,27 +29,53 @@ from fit_common.core import (
     set_debug_level,
     set_gui_crash_handler,
 )
+from fit_common.gui.utils import show_dialog
 from packaging.version import Version
 from PySide6 import QtGui
-from PySide6.QtWidgets import QApplication, QMessageBox
+from PySide6.QtWidgets import QApplication
 
+from fit_web.lang import load_translations
 from fit_web.mitmproxy.runner import MitmproxyRunner
 from fit_web.web import Web
 
 
-# Todo: devo realizzare delle dialog pysyde che sono però al di fuori di run_gui
-# o in alternativa delle dialog di sistema dito Applescript
 def _log_bootstrap_result(result: BootstrapResult) -> None:
+
+    __translations = bootstrap_load_translations()
+    title = __translations.get("BOOSTSTRAP_ERROR_DIALOG_TITLE")
     if result.signal == BootstrapSignal.OK:
-        debug("✅ Bootstrap completed", context="Main.fit_web")
+        debug("✅ Bootstrap completed", context="main.fit_web")
     elif result.signal == BootstrapSignal.ADMIN_DENIED:
-        debug("❌ Admin permissions denied", context="Main.fit_web")
+        debug("❌ Admin permissions denied", context="main.fit_web")
+        admin_type = "administrator" if get_platform() == "win" else "root"
+        message = __translations.get("BOOSTSTRAP_ADMIN_DENIED_MESSAGE").format(
+            admin_type, admin_type
+        )
+        show_dialog("error", title, message, "")
+    elif result.signal == BootstrapSignal.CERTIFICATE_NOT_INSTALLED:
+        debug("❌ Certificate installation failed", context="main.fit_web")
+        show_dialog(
+            "error",
+            title,
+            __translations.get("BOOSTSTRAP_CERTIFICATE_NOT_INSTALLED_MESSAGE"),
+        )
     elif result.signal == BootstrapSignal.UNSUPPORTED_OS:
         debug(
-            f"❌ Unsupported operating system: {result.message}", context="Main.fit_web"
+            f"❌ Unsupported operating system: {result.message}", context="main.fit_web"
+        )
+        show_dialog(
+            "error",
+            title,
+            __translations.get("BOOSTSTRAP_UNSUPPORTED_OS_MESSAGE"),
         )
     else:
-        debug(f"❌ Bootstrap error: {result.message}", context="Main.fit_web")
+        debug(f"❌ Bootstrap error: {result.message}", context="main.fit_web")
+        show_dialog(
+            "error",
+            title,
+            __translations.get("BOOSTSTRAP_UNKNOW_ERROR_MSG"),
+            result.message,
+        )
 
 
 def _mac_ok():
@@ -59,8 +86,28 @@ def _mac_ok():
 
 
 if not _mac_ok():
-    # TODO - Finestra ad-hoc leggi TODO sopra
-    raise SystemExit("FIT richiede macOS 11.3 o superiore.")
+    __translations = load_translations()
+    show_dialog(
+        "error",
+        __translations.get("OS_VERSION_ERROR_DIALOG_TITLE"),
+        __translations.get("MACOS_VERSION_ERROR_DIALOG_MESSAGE").format(
+            platform.mac_ver()[0]
+        ),
+        "",
+    )
+    debug("❌ macOS version not supported", context="main.fit_web")
+    raise SystemExit("❌ macOS version not supported")
+
+
+def show_crash_dialog(error_message: str):
+    __translations = load_translations()
+
+    show_dialog(
+        "error",
+        __translations.get("APPLICATION_ERROR_DIALOG_TITLE"),
+        __translations.get("APPLICATION_ERROR_DIALOG_MESSAGE"),
+        error_message,
+    )
 
 
 def parse_args():
@@ -72,17 +119,6 @@ def parse_args():
         help="Set the debug level (default: none)",
     )
     return parser.parse_args()
-
-
-def show_crash_dialog(error_message: str):
-    # TODO - Finestra ad-hoc leggi TODO sopra
-    msg_box = QMessageBox()
-    msg_box.setIcon(QMessageBox.Critical)
-    msg_box.setWindowTitle("Application Error")
-    msg_box.setText("A fatal error occurred:")
-    msg_box.setDetailedText(error_message)
-    msg_box.setStandardButtons(QMessageBox.Ok)
-    msg_box.exec()
 
 
 def _run_gui() -> int:
