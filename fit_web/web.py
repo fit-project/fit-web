@@ -487,19 +487,21 @@ class Web(Scraper):
     # END DOWNLOAD METHODS
 
     def __enable_all(self):
-        # TODO devo bloccare anche close e minize
         if self.acquisition_status in (
             AcquisitionStatus.UNSTARTED,
             AcquisitionStatus.FINISHED,
         ):
             self.__enable_screenshot_buttons(False)
             self.__enable_navigation_buttons(True)
+            self.__enable_right_buttons_container(True)
             self.setEnabled(True)
         elif self.acquisition_status == AcquisitionStatus.STARTED:
             self.__enable_screenshot_buttons(True)
             self.__enable_navigation_buttons(True)
+            self.__enable_right_buttons_container(False)
             self.setEnabled(True)
         elif self.acquisition_status == AcquisitionStatus.STOPPED:
+            self.__enable_right_buttons_container(False)
             self.setEnabled(False)
 
         self.__enable_acquisition_buttons()
@@ -519,6 +521,9 @@ class Web(Scraper):
 
         self.ui.start_acquisition_button.setEnabled(start)
         self.ui.stop_acquisition_button.setEnabled(stop)
+
+    def __enable_right_buttons_container(self, enable):
+        self.ui.right_buttons_container.setEnabled(enable)
 
     def __enable_screenshot_buttons(self, enable):
         self.ui.screenshot_visible_area_button.setEnabled(enable)
