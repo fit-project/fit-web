@@ -408,12 +408,7 @@ class Web(Scraper):
         web_view = SystemWebView()
         user_agent = GeneralController().configuration["user_agent"]
 
-        web_view.setUserAgent(user_agent + " FreezingInternetTool/" + get_version())
-
-        # TODO devo aggiornarlo per sistema operativo sul DB
-        web_view.setUserAgent(
-            "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.4 Safari/605.1.15"
-        )
+        web_view.setUserAgent(user_agent)
 
         web_view.urlChanged.connect(
             lambda qurl, browser=web_view: self.__update_urlbar(qurl, browser)
