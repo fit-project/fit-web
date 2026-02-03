@@ -1,5 +1,3 @@
-- /Users/zitelog/Developer/Workspace/fit-web/fit_web/web.py:591 - da verificare se va bene così con wizard oppure se sta acquisendo
-
 - Devo riattivare lo screencapture e capire quale è il problema
 - Devo verificare perchè mitproxy non funziona corettamente con github
 - Devi modificare a tutti i moduli get_system_lang
@@ -9,3 +7,4 @@
 - devo verificare perchè rimane la cartella screenshot
 - devo verificare perchè acquisition.log è vuoto
 - devo assolutamente modificare approccio per la scrittura dei file di acquisizione acquisition.log, traceroute.txt, ....
+- devo mettere la porta di mitmproxy randomica da passare poi a os_proxy_setup

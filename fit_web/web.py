@@ -588,6 +588,6 @@ class Web(Scraper):
         return False
 
     def closeEvent(self, event):
-        # TODO da verificare se va bene così con wizard oppure se sta acquisendo
-        self.mitm_runner.stop_by_pid()
+        if self._Scraper__can_close() and self._Scraper__wizard is None:
+            self.mitm_runner.stop_by_pid()
         return super().closeEvent(event)
