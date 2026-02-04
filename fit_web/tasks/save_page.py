@@ -11,15 +11,14 @@
 import os
 import shutil
 import tempfile
-import zipfile
 
-from multipart import ParserError
 from fit_acquisition.tasks.task import Task
 from fit_acquisition.tasks.task_worker import TaskWorker
 from fit_bootstrap.constants import FIT_USER_APP_PATH
 from fit_common.core import debug, get_context, log_exception
 from fit_common.gui.utils import Status
 from har2warc.har2warc import har2warc
+from multipart import ParserError
 from wacz import main as wacz_main
 
 from fit_web.lang import load_translations
@@ -38,11 +37,6 @@ class TaskSavePageWorker(TaskWorker):
             self.acquisition_directory = self.options["acquisition_directory"]
             self.current_widget = self.options["current_widget"]
 
-            acquisition_page_folder = os.path.join(
-                self.acquisition_directory, "acquisition_page"
-            )
-            if not os.path.isdir(acquisition_page_folder):
-                os.makedirs(acquisition_page_folder)
             debug("ℹ️ Starting WACZ build", context=get_context(self))
             self._build_wacz()
             debug("✅ WACZ build completed", context=get_context(self))
@@ -89,8 +83,8 @@ class TaskSavePageWorker(TaskWorker):
             )
             debug(f"✅ WARC created: {warc_path}", context=get_context(self))
 
-            wacz_path = os.path.join(temp_dir, "archive.wacz")
-            debug("ℹ️ Creating WACZ archive", context=get_context(self))
+            wacz_path = os.path.join(temp_dir, "acquisition_page.wacz")
+            debug("ℹ️ Creating WACZ acquisition_page", context=get_context(self))
             try:
                 result = self._create_wacz(warc_path, wacz_path)
             except ParserError as e:
@@ -107,7 +101,7 @@ class TaskSavePageWorker(TaskWorker):
             debug(f"✅ WACZ created: {wacz_path}", context=get_context(self))
 
             final_wacz = os.path.join(
-                self.acquisition_directory, "archive.wacz"
+                self.acquisition_directory, "acquisition_page.wacz"
             )
             shutil.copyfile(wacz_path, final_wacz)
             debug(f"✅ WACZ saved: {final_wacz}", context=get_context(self))
