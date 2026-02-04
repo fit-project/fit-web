@@ -8,6 +8,7 @@
 ######
 
 import os
+import shutil
 from datetime import datetime
 from json import loads
 
@@ -43,6 +44,8 @@ class TaskFullPageScreenShotWorker(TaskWorker):
         self.__screenshot_directory = None
         self.__is_task = False
         self.__connected = False
+        self.__full_page_folder = None
+        self.__js_result_handler = None
 
     def __ensure_connected(self):
         if not self.__connected:
@@ -51,20 +54,40 @@ class TaskFullPageScreenShotWorker(TaskWorker):
 
     def __scroll_and_shoot(self):
         if not self.__capture_queue:
-            imgs = [Image.open(i) for i in self.__capture_files]
+            missing_files = [i for i in self.__capture_files if not os.path.isfile(i)]
+            if missing_files:
+                debug(
+                    f"⚠️ missing capture files count={len(missing_files)}",
+                    context=get_context(self),
+                )
+            existing_files = [i for i in self.__capture_files if os.path.isfile(i)]
+            if not existing_files:
+                debug("❌ no capture files found", context=get_context(self))
+                return
+
+            imgs = [Image.open(i) for i in existing_files]
             min_shape = sorted([(np.sum(i.size), i.size) for i in imgs])[0][1]
             stacked = np.vstack([i.resize(min_shape) for i in imgs])
             out = Image.fromarray(stacked)
 
             whole_img_filename = screenshot_filename(
-                self.__screenshot_directory, "full_page"
+                self.__screenshot_directory,
+                f"full_page_{self.__current_widget.url().host()}",
             )
             if self.__is_task:
                 whole_img_filename = os.path.join(
-                    self.__acquisistion_directory, "screenshot.png"
+                    self.__acquisistion_directory, "acquisition_page.png"
                 )
 
             out.save(whole_img_filename)
+            if not self.__is_task and self.__full_page_folder:
+                try:
+                    shutil.rmtree(self.__full_page_folder)
+                except OSError as e:
+                    debug(
+                        f"❌ remove full_page_folder failed: {e}",
+                        context=get_context(self),
+                    )
 
             self.__current_widget.evaluateJavaScript(
                 f"window.scrollTo(0, {self.__start_point_y});"
@@ -107,6 +130,13 @@ class TaskFullPageScreenShotWorker(TaskWorker):
         self.__screenshot_directory = screenshot_directory
         self.__is_task = is_task
 
+        if self.__js_result_handler is not None:
+            try:
+                current_widget.javaScriptResult.disconnect(self.__js_result_handler)
+            except (TypeError, RuntimeError):
+                pass
+            self.__js_result_handler = None
+
         # 1) metrics
         __token = current_widget.evaluateJavaScriptWithResult(
             "(() => ({ y: window.scrollY,"
@@ -116,24 +146,29 @@ class TaskFullPageScreenShotWorker(TaskWorker):
 
         def on_javascript_result(result, token, error):
             if token != __token:
-                raise ValueError(
-                    self.__translations[
-                        "MISMATCHED_JAVASCRIPT_RESULT_TOKEN_ERROR"
-                    ].format(__token, token)
-                )
-            if error:
-                raise ValueError(error)
+                return
+            try:
+                if error:
+                    raise ValueError(error)
+            finally:
+                try:
+                    current_widget.javaScriptResult.disconnect(on_javascript_result)
+                except (TypeError, RuntimeError):
+                    pass
+                self.__js_result_handler = None
 
             page_metrics = loads(result) if isinstance(result, str) else result
             self.__start_point_y = page_metrics["y"]
 
             # 2) Create the output directory and build the capture queue
             full_page_folder = None
-            if acquisition_directory is not None:
+            parts_root = self.__screenshot_directory or acquisition_directory
+            if parts_root is not None:
                 full_page_folder = os.path.join(
-                    acquisition_directory, f"full_page/{current_widget.url().host()}/"
+                    parts_root, f"full_page_parts/{current_widget.url().host()}/"
                 )
                 os.makedirs(full_page_folder, exist_ok=True)
+            self.__full_page_folder = full_page_folder
 
             # scroll to the top
             current_widget.evaluateJavaScript("window.scrollTo(0, 0);")
@@ -161,6 +196,7 @@ class TaskFullPageScreenShotWorker(TaskWorker):
 
             self.__scroll_and_shoot()
 
+        self.__js_result_handler = on_javascript_result
         current_widget.javaScriptResult.connect(on_javascript_result)
 
     def start(self):

@@ -123,7 +123,9 @@ class Web(Scraper):
         self.ui.stop_acquisition_button.clicked.connect(self.__execute_stop_tasks_flow)
 
         # SET LOCAL ACQUISITON BUTTONS
-        self.ui.screenshot_visible_area_button.clicked.connect(self.__take_screenshot)
+        self.ui.screenshot_visible_area_button.clicked.connect(
+            self.__take_screenshot_visible_area
+        )
         self.ui.screenshot_selected_area_button.clicked.connect(
             self.__take_screenshot_selected_area
         )
@@ -284,7 +286,7 @@ class Web(Scraper):
     # END ACQUISITON EVENTS
 
     # START LOCAL ACQUISITON METHODS
-    def __take_screenshot(self):
+    def __take_screenshot_visible_area(self):
         if not self.screenshot_directory:
             return
 
@@ -321,7 +323,9 @@ class Web(Scraper):
         QtCore.QTimer.singleShot(100, loop.quit)
         loop.exec()
 
-        filename = screenshot_filename(self.screenshot_directory, view.url().host())
+        filename = screenshot_filename(
+            self.screenshot_directory, "visible_area_" + view.url().host()
+        )
         # salva il token per filtrare il callback
         self._last_capture_token = view.captureVisiblePage(filename)
 
@@ -333,7 +337,7 @@ class Web(Scraper):
             loop.exec()
             filename = screenshot_filename(
                 self.screenshot_directory,
-                "selected_" + self.ui.tabs.currentWidget().url().host(),
+                "selected_area_" + self.ui.tabs.currentWidget().url().host(),
             )
             select_area = SelectAreaScreenshot(filename, self)
             select_area.finished.connect(self.__enable_all)
