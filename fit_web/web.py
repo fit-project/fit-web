@@ -46,6 +46,7 @@ class Web(Scraper):
 
             self.acquisition.start_tasks = [
                 class_names.PACKETCAPTURE,
+                class_names.SCREENRECORDER,
             ]
             self.acquisition.stop_tasks = [
                 class_names.WHOIS,
@@ -56,6 +57,7 @@ class Web(Scraper):
                 class_names.TRACEROUTE,
                 class_names.PACKETCAPTURE,
                 class_names.SAVE_PAGE,
+                class_names.SCREENRECORDER,
             ]
 
             self.acquisition.external_tasks = [class_names.FULL_PAGE_SCREENSHOT]
