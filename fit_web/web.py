@@ -12,6 +12,7 @@ import logging
 import os
 
 from fit_acquisition.class_names import class_names
+from fit_bootstrap.constants import FIT_MITM_PORT
 from fit_common.core import debug, get_context, get_version
 from fit_common.gui.error import Error
 from fit_configurations.controller.tabs.general.general import GeneralController
@@ -574,7 +575,26 @@ class Web(Scraper):
             self.proxy_manager = None
             return False
 
-        self.proxy_manager.enable_capture_proxy("127.0.0.1", 8080)
+        mitm_port = os.environ.get(FIT_MITM_PORT)
+        if not mitm_port:
+            debug(
+                f"❌ {FIT_MITM_PORT} env not set; skipping OS proxy",
+                context=get_context(self),
+            )
+            return False
+        debug(
+            f"mitm_port env={os.environ.get(FIT_MITM_PORT)} resolved={mitm_port}",
+            context=get_context(self),
+        )
+        try:
+            port_value = int(mitm_port)
+        except ValueError:
+            debug(
+                f"❌ Invalid {FIT_MITM_PORT} value: {mitm_port}",
+                context=get_context(self),
+            )
+            return False
+        self.proxy_manager.enable_capture_proxy("127.0.0.1", port_value)
         debug("✅ Proxy enabled for capture", context=get_context(self))
         return True
 

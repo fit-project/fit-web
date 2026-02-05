@@ -901,7 +901,7 @@ xhtml2pdf = "^0.2.17"
 type = "git"
 url = "https://github.com/fit-project/fit-acquisition.git"
 reference = "main"
-resolved_reference = "7b52acad0d1caf7590494fb06369974f7e0d3050"
+resolved_reference = "a296ef9dc0906a2c0787ca432ada629e50386bd2"
 
 [[package]]
 name = "fit-assets"
@@ -942,7 +942,7 @@ pyinstaller = "^6.18.0"
 type = "git"
 url = "https://github.com/fit-project/fit-bootstrap.git"
 reference = "main"
-resolved_reference = "f0f5774907c8c923a7a935b74c85579a88eac041"
+resolved_reference = "1de5d29e24f8b0b7cea91af502dc6c2a4a327df5"
 
 [[package]]
 name = "fit-cases"
@@ -990,7 +990,7 @@ xhtml2pdf = "^0.2.17"
 type = "git"
 url = "https://github.com/fit-project/fit-common.git"
 reference = "main"
-resolved_reference = "004736cb185a8db2a77f7413faf5de269253e623"
+resolved_reference = "c324f4e4bddcc08cc1ae9dcf603522ece8778b13"
 
 [[package]]
 name = "fit-configurations"
