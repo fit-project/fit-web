@@ -6,6 +6,7 @@
 
 
 - BUG: devo verificare perchè acquisition.log è vuoto
+- Devo scrivere nei log le informazioni prese in fase di boostrap nelle variabili d'ambiente
 - BUG: devo assolutamente modificare approccio per la scrittura dei file di acquisizione acquisition.log, traceroute.txt, ....
 - BUG: Devo verificare perchè mitproxy non funziona corettamente con github
 

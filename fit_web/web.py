@@ -202,6 +202,14 @@ class Web(Scraper):
 
                         return
 
+                    # Give mitm a brief head start to pick up the "start" control signal.
+                    loop = QtCore.QEventLoop()
+                    QtCore.QTimer.singleShot(600, loop.quit)
+                    loop.exec()
+
+                    # Reload here so mitm can attach to the page that initiates acquisition traffic.
+                    self.__reload()
+
                     super().execute_start_tasks_flow()
 
                     self.__enable_all()
