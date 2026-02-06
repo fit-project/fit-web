@@ -1,5 +1,3 @@
-- devo fare un refresh della prima pagina che viene acquisita
-- Sul form della scelta del caso devo mettere che su enter sulla tastiera premo start
 
 - dovrò cambiare nel report che la pagina viene salvata in formato wacz
 - devo aggiungere un disclaimer che dice di chiudere tutte le altre finestre che fanno traffico
