@@ -4,12 +4,10 @@
     - devo modificare il modo in cui vengono gestite le traduzioni retranslateUi non può trovarsi nella *_ui.py
     - La lingua deve essere quella dello user al monento del bootstrap
     - Devo cambiare le stringe di acquisition_type (web ,instagram, email, ... ) con: from fit_common.core import AcquisitionType
-
-- devo aggiungere un disclaimer che dice di chiudere tutte le altre finestre che fanno traffico
+    - Devo scrivere nei log le informazioni prese in fase di boostrap nelle variabili d'ambiente
 
 
 - BUG: devo verificare perchè acquisition.log è vuoto
-- Devo scrivere nei log le informazioni prese in fase di boostrap nelle variabili d'ambiente
 - BUG: devo assolutamente modificare approccio per la scrittura dei file di acquisizione acquisition.log, traceroute.txt, ....
 - BUG: Devo verificare perchè mitproxy non funziona corettamente con github
 

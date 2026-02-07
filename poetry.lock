@@ -942,7 +942,7 @@ pyinstaller = "^6.18.0"
 type = "git"
 url = "https://github.com/fit-project/fit-bootstrap.git"
 reference = "main"
-resolved_reference = "aa663703160bf43f36865dec5fb47e622b24b0e2"
+resolved_reference = "4b37251e73579497bb0fdfab8d28846be067e673"
 
 [[package]]
 name = "fit-cases"

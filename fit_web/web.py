@@ -77,6 +77,9 @@ class Web(Scraper):
                 "Homepage",
             )
 
+            if os.environ.get("FIT_EXECUTION_ENV", "") == "LOCAL_PC":
+                self.__show_http_https_disclaimer()
+
     def __init_ui(self):
         # HIDE STANDARD TITLE BAR
         self.setWindowFlags(QtCore.Qt.WindowType.FramelessWindowHint)
@@ -216,6 +219,17 @@ class Web(Scraper):
                     super().execute_start_tasks_flow()
 
                     self.__enable_all()
+
+    def __show_http_https_disclaimer(self) -> bool:
+        title = self.__translations["HTTP_HTTPS_DISCLAIMER_TITLE"]
+        message = self.__translations["HTTP_HTTPS_DISCLAIMER_MESSAGE"]
+        error_dialog = Error(
+            QtWidgets.QMessageBox.Icon.Warning,
+            title,
+            message,
+            "",
+        )
+        error_dialog.exec()
 
     def __execute_stop_tasks_flow(self):
         debug("ℹ️ __execute_stop_tasks_flow called", context=get_context(self))
