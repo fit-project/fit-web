@@ -13,7 +13,7 @@ import os
 
 from fit_acquisition.class_names import class_names
 from fit_bootstrap.constants import FIT_MITM_PORT
-from fit_common.core import debug, get_context, get_version
+from fit_common.core import AcquisitionType, debug, get_context, get_version
 from fit_common.gui.error import Error
 from fit_common.gui.ui_translation import translate_ui
 from fit_configurations.controller.tabs.general.general import GeneralController
@@ -39,7 +39,7 @@ class Web(Scraper):
         logger = logging.getLogger("scrapers.web")
         packages = ["fit_web.tasks"]
 
-        super().__init__(logger, "web", packages, wizard)
+        super().__init__(logger, AcquisitionType.WEB, packages, wizard)
 
         if self.has_valid_case:
 

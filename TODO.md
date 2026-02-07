@@ -2,9 +2,9 @@
 - TUTTI I MODULI CHE HANNO LANG: 
     - Devi modificare a tutti i moduli get_system_lang
     - devo modificare il modo in cui vengono gestite le traduzioni retranslateUi non può trovarsi nella *_ui.py
-    - La lingua deve essere quella del bootstrap
+    - La lingua deve essere quella dello user al monento del bootstrap
+    - Devo cambiare le stringe di acquisition_type (web ,instagram, email, ... ) con: from fit_common.core import AcquisitionType
 
-- dovrò cambiare nel report che la pagina viene salvata in formato wacz
 - devo aggiungere un disclaimer che dice di chiudere tutte le altre finestre che fanno traffico
 
 

@@ -901,7 +901,7 @@ xhtml2pdf = "^0.2.17"
 type = "git"
 url = "https://github.com/fit-project/fit-acquisition.git"
 reference = "main"
-resolved_reference = "a296ef9dc0906a2c0787ca432ada629e50386bd2"
+resolved_reference = "26aaf08cdc1b6eebd575ac7eb5eadd534a41dd64"
 
 [[package]]
 name = "fit-assets"
@@ -920,7 +920,7 @@ PySide6 = "6.9.0"
 type = "git"
 url = "https://github.com/fit-project/fit-assets.git"
 reference = "main"
-resolved_reference = "98c92e4cad648b9175a10252e4f8696174ec54db"
+resolved_reference = "eecaa039f699ab563bf7841e74e0470870b7318e"
 
 [[package]]
 name = "fit-bootstrap"
@@ -990,7 +990,7 @@ xhtml2pdf = "^0.2.17"
 type = "git"
 url = "https://github.com/fit-project/fit-common.git"
 reference = "main"
-resolved_reference = "c324f4e4bddcc08cc1ae9dcf603522ece8778b13"
+resolved_reference = "0c62f08bb82cb926b3a7a66ab2bd096e0891841c"
 
 [[package]]
 name = "fit-configurations"
