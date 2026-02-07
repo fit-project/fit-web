@@ -15,6 +15,7 @@ from fit_acquisition.class_names import class_names
 from fit_bootstrap.constants import FIT_MITM_PORT
 from fit_common.core import debug, get_context, get_version
 from fit_common.gui.error import Error
+from fit_common.gui.ui_translation import translate_ui
 from fit_configurations.controller.tabs.general.general import GeneralController
 from fit_scraper.scraper import AcquisitionStatus, Scraper
 from fit_webview_bridge import SystemWebView
@@ -144,6 +145,8 @@ class Web(Scraper):
         self.ui.tabs.tabBarDoubleClicked.connect(self.__tab_open_doubleclick)
         self.ui.tabs.currentChanged.connect(self.__current_tab_changed)
         self.ui.tabs.tabCloseRequested.connect(self.__close_current_tab)
+
+        translate_ui(self.__translations, self)
 
     def mousePressEvent(self, event):
         self.dragPos = event.globalPosition().toPoint()

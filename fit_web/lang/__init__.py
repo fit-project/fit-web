@@ -1,5 +1,4 @@
 import json
-import locale
 from pathlib import Path
 
 from fit_common.core import DEFAULT_LANG, get_system_lang
