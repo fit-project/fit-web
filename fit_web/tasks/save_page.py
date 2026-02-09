@@ -10,7 +10,10 @@
 
 import os
 import shutil
+import sys
 import tempfile
+import types
+from importlib.metadata import PackageNotFoundError, version as package_version
 
 from fit_acquisition.tasks.task import Task
 from fit_acquisition.tasks.task_worker import TaskWorker
@@ -19,7 +22,6 @@ from fit_common.core import debug, get_context, log_exception
 from fit_common.gui.utils import Status
 from har2warc.har2warc import har2warc
 from multipart import ParserError
-from wacz import main as wacz_main
 
 from fit_web.lang import load_translations
 
@@ -109,6 +111,9 @@ class TaskSavePageWorker(TaskWorker):
     def _create_wacz(
         self, warc_path: str, wacz_path: str, disable_post_append: bool = False
     ) -> int | None:
+        self._ensure_pkg_resources_compat()
+        from wacz import main as wacz_main
+
         args = [
             "create",
             warc_path,
@@ -133,6 +138,31 @@ class TaskSavePageWorker(TaskWorker):
             return wacz_main.main(args)
         finally:
             wacz_main.WACZIndexer = original
+
+    @staticmethod
+    def _ensure_pkg_resources_compat() -> None:
+        try:
+            import pkg_resources  # noqa: F401
+            return
+        except ModuleNotFoundError:
+            pass
+
+        shim = types.ModuleType("pkg_resources")
+
+        class _Dist:
+            def __init__(self, pkg_name: str):
+                self.version = package_version(pkg_name)
+
+        def _get_distribution(pkg_name: str):
+            try:
+                return _Dist(pkg_name)
+            except PackageNotFoundError as e:
+                raise ModuleNotFoundError(
+                    f"Distribution not found for '{pkg_name}'"
+                ) from e
+
+        shim.get_distribution = _get_distribution
+        sys.modules["pkg_resources"] = shim
 
 
 class TaskSavePage(Task):

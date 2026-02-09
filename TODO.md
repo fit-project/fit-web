@@ -8,7 +8,8 @@
      - Devo cambiare le stringe di acquisition_type (web ,instagram, email, ... ) con: from fit_common.core import AcquisitionType
       - Devo cambiare le stringe di logger = logging.getLogger("scrapers.web") con: from fit_acquisition.logger_names import LoggerName logger = logging.getLogger(LoggerName.SCRAPER_WEB.value)
 
-- BUG: Devo verificare perchè mitproxy non funziona corettamente con github
+- BUG: mitproxy non funziona corettamente con amazon.com
+
 
 Errore de merda
 [DEBUG] 2026-02-04T11:02:40 - privilege: sudo failed, exit code: -11

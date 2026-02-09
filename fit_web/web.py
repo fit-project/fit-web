@@ -214,6 +214,23 @@ class Web(Scraper):
                     QtCore.QTimer.singleShot(600, loop.quit)
                     loop.exec()
 
+                    current_widget = self.ui.tabs.currentWidget()
+                    if current_widget and hasattr(current_widget, "clearWebsiteData"):
+                        try:
+                            current_widget.clearWebsiteData()
+                            debug(
+                                "ℹ️ cleared webview website data before capture reload",
+                                context=get_context(self),
+                            )
+                            loop = QtCore.QEventLoop()
+                            QtCore.QTimer.singleShot(400, loop.quit)
+                            loop.exec()
+                        except Exception as exc:
+                            debug(
+                                f"❌ clearWebsiteData failed: {exc}",
+                                context=get_context(self),
+                            )
+
                     # Reload here so mitm can attach to the page that initiates acquisition traffic.
                     self.__reload()
 
