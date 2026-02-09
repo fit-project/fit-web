@@ -140,7 +140,7 @@ def _run_gui() -> int:
 
     mitm_runner.stop_by_pid()
     debug(
-        "❌ User cancelled the case form. Nothing to display.", context="Main.fit_web"
+        "❌ User cancelled the case form. Nothing to display.", context="main.fit_web"
     )
     return 0
 
@@ -165,16 +165,16 @@ def main() -> int:
         }[args.debug]
     )
 
-    debug(f"argv: {sys.argv}")
-    debug(f"bundled: {is_bundled()}")
+    debug(f"argv: {sys.argv}", context="main.fit_web")
+    debug(f"bundled: {is_bundled()}", context="main.fit_web")
 
     if os.environ.get(STAGE_ENV) == STAGE_GUI:
-        debug(f"GUI stage admin: {is_admin()}")
+        debug(f"GUI stage admin: {is_admin()}", context="main.fit_web")
         if not is_admin():
-            debug("❌ GUI stage requires root privileges")
+            debug("❌ GUI stage requires root privileges", context="main.fit_web")
             return 1
         if not acquire_app_lock():
-            debug("❌ Another instance is already running")
+            debug("❌ Another instance is already running", context="main.fit_web")
             return 1
         atexit.register(release_app_lock)
         return _run_gui()
@@ -183,7 +183,7 @@ def main() -> int:
 
     mitm_runner = MitmproxyRunner()
     if not mitm_runner.start():
-        debug("❌ mitmproxy start failed")
+        debug("❌ mitmproxy start failed", context="main.fit_web")
         return 1
 
     preflight_result = bootstrap._dispatch(

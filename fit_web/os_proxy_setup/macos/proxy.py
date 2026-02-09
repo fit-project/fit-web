@@ -1,9 +1,19 @@
+#!/usr/bin/env python3
+# -*- coding:utf-8 -*-
+######
+# -----
+# Copyright (c) 2023 FIT-Project
+# SPDX-License-Identifier: LGPL-3.0-or-later
+# -----
+######
+
 from __future__ import annotations
 
 import subprocess
 from typing import Iterable
 
 from fit_common.core import debug, get_context
+
 from fit_web.os_proxy_setup import ProxyState
 
 
