@@ -12,6 +12,7 @@ import logging
 import os
 
 from fit_acquisition.class_names import class_names
+from fit_acquisition.logger_names import LoggerName
 from fit_bootstrap.constants import FIT_MITM_PORT
 from fit_common.core import AcquisitionType, debug, get_context, get_version
 from fit_common.gui.error import Error
@@ -36,7 +37,7 @@ from fit_web.web_ui import (
 
 class Web(Scraper):
     def __init__(self, wizard=None):
-        logger = logging.getLogger("scrapers.web")
+        logger = logging.getLogger(LoggerName.SCRAPER_WEB.value)
         packages = ["fit_web.tasks"]
 
         super().__init__(logger, AcquisitionType.WEB, packages, wizard)
