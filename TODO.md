@@ -1,14 +1,8 @@
 
-- TUTTI I MODULI CHE HANNO LANG: 
-    - Devi modificare a tutti i moduli get_system_lang
-    - devo modificare il modo in cui vengono gestite le traduzioni retranslateUi non può trovarsi nella *_ui.py
-    - Devo scrivere nei log le informazioni prese in fase di boostrap nelle variabili d'ambiente
+- TUTTI I MODULI CHE HANNO UI TESTS:
+    - Devo escluderla dal toml (vedi fit-cases)
 
-- TUTTI I MODULI SCRAPER
-     - Devo cambiare le stringe di acquisition_type (web ,instagram, email, ... ) con: from fit_common.core import AcquisitionType
-      - Devo cambiare le stringe di logger = logging.getLogger("scrapers.web") con: from fit_acquisition.logger_names import LoggerName logger = logging.getLogger(LoggerName.SCRAPER_WEB.value)
-
-- BUG: mitproxy non funziona corettamente con amazon.com
+- ISSUE CONOSCIUTA: mitproxy non funziona corettamente con amazon.com
 
 
 Errore de merda
