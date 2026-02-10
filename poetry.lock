@@ -915,7 +915,7 @@ xhtml2pdf = "^0.2.17"
 type = "git"
 url = "https://github.com/fit-project/fit-acquisition.git"
 reference = "main"
-resolved_reference = "227d191b8417e0e20c21f61138bc0d3cf64c880a"
+resolved_reference = "e2bf0b1dc9b42ccbd6c0dd5dc37a186a8a26029e"
 
 [[package]]
 name = "fit-assets"

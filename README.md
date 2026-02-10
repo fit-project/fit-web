@@ -5,6 +5,13 @@ Provides PySide6-based UI flows and utilities to acquire web content (pages and 
 
 ---
 
+## 🔐 Forensic design note
+
+> **Note (v3):** `sslkey.log` is no longer generated as part of the acquisition artifacts.  
+> See `docs/forensics/sslkey_log_forensic_reasoning_EN.md` for the forensic rationale.
+
+---
+
 ## 🔗 Related FIT components
 
 This package is designed to work alongside other FIT modules:

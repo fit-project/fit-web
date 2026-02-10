@@ -1,4 +1,7 @@
 - ISSUE CONOSCIUTA: mitproxy non funziona corettamente con amazon.com
+- Del report non mi convincie assolutamente le parti:
+    - File prodotti dal sistema
+    - File prodotti dall'utente
 
 
 Errore de merda
