@@ -17,7 +17,7 @@ app = QApplication([])
 
 view = SystemWebView()
 view.setMinimumSize(900, 600)
-view.load(URL)  # carica una pagina semplice
+view.setUrl(URL)  # carica una pagina semplice
 view.show()
 
 

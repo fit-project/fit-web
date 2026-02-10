@@ -163,6 +163,10 @@ class Web(Scraper):
 
     # START GLOBAL ACQUISITON METHODS
     def __execute_start_tasks_flow(self):
+        self.setEnabled(False)
+        loop = QtCore.QEventLoop()
+        QtCore.QTimer.singleShot(400, loop.quit)
+        loop.exec()
         debug("ℹ️ __execute_start_tasks_flow called", context=get_context(self))
         if self.create_acquisition_directory():
             debug("ℹ️ acquisition directory created", context=get_context(self))
@@ -194,6 +198,7 @@ class Web(Scraper):
                             "",
                         )
                         error_dlg.exec()
+                        self.setEnabled(True)
                         return
 
                     debug("ℹ️ starting mitm capture", context=get_context(self))
@@ -206,7 +211,7 @@ class Web(Scraper):
                             "",
                         )
                         error_dlg.exec()
-
+                        self.setEnabled(True)
                         return
 
                     # Give mitm a brief head start to pick up the "start" control signal.
@@ -237,6 +242,23 @@ class Web(Scraper):
                     super().execute_start_tasks_flow()
 
                     self.__enable_all()
+                else:
+                    debug(
+                        "❌ Failed to create downloads directory",
+                        context=get_context(self),
+                    )
+                    self.setEnabled(True)
+            else:
+                debug(
+                    "❌ Failed to create screenshot directory",
+                    context=get_context(self),
+                )
+                self.setEnabled(True)
+        else:
+            debug(
+                "❌ Failed to create acquisition directory", context=get_context(self)
+            )
+            self.setEnabled(True)
 
     def __show_http_https_disclaimer(self) -> bool:
         title = self.__translations["HTTP_HTTPS_DISCLAIMER_TITLE"]
