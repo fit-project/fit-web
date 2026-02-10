@@ -915,7 +915,7 @@ xhtml2pdf = "^0.2.17"
 type = "git"
 url = "https://github.com/fit-project/fit-acquisition.git"
 reference = "main"
-resolved_reference = "1ee39773f04b7c1db291345cb8086b84f6d967d2"
+resolved_reference = "227d191b8417e0e20c21f61138bc0d3cf64c880a"
 
 [[package]]
 name = "fit-assets"
@@ -1004,7 +1004,7 @@ xhtml2pdf = "^0.2.17"
 type = "git"
 url = "https://github.com/fit-project/fit-common.git"
 reference = "main"
-resolved_reference = "01b28a8692ec831d02e36b809a76ede24a973032"
+resolved_reference = "4ba0b5f637aca5af087aeb6e503eaa4432ea4f69"
 
 [[package]]
 name = "fit-configurations"
@@ -1027,7 +1027,7 @@ sqlalchemy = "^2.0.40"
 type = "git"
 url = "https://github.com/fit-project/fit-configurations.git"
 reference = "main"
-resolved_reference = "9106badf2261c944de213daf1b25558dcba889ec"
+resolved_reference = "ec42495ecb8bf725608a70d5901051a80e000213"
 
 [[package]]
 name = "fit-scraper"

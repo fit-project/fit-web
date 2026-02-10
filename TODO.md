@@ -1,7 +1,3 @@
-
-- TUTTI I MODULI CHE HANNO UI TESTS:
-    - Devo escluderla dal toml (vedi fit-cases)
-
 - ISSUE CONOSCIUTA: mitproxy non funziona corettamente con amazon.com
 
 
