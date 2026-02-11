@@ -55,7 +55,7 @@ class Web(Scraper):
                 class_names.WHOIS,
                 class_names.NSLOOKUP,
                 class_names.HEADERS,
-                class_names.SSLKEYLOG,
+                # class_names.SSLKEYLOG, # Removed since v3. See `docs/forensics/sslkey_log_forensic_reasoning_EN.md` for the forensic rationale
                 class_names.SSLCERTIFICATE,
                 class_names.TRACEROUTE,
                 class_names.PACKETCAPTURE,
