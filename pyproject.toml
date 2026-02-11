@@ -17,8 +17,8 @@ fit-bootstrap = {git = "https://github.com/fit-project/fit-bootstrap.git", rev =
 fit-scraper = {git = "https://github.com/fit-project/fit-scraper.git", rev = "main"}
 har2warc = "^1.0.4"
 wacz = "^0.5.0"
-fit-webview-bridge = "0.2.8a5"
 setuptools = ">=75,<81"
+fit-webview-bridge = "0.2.9a5"
 
 [build-system]
 requires = ["poetry-core>=2.0.0,<3.0.0"]

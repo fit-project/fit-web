@@ -68,6 +68,10 @@ class Web(Scraper):
             self.mitm_runner = MitmproxyRunner(self)
             self.proxy_manager = get_proxy_manager()
             self.proxy_state: ProxyState | None = None
+            self.__download_progress_debug_last = -1
+            self.__default_download_directory = os.path.join(
+                os.path.expanduser("~"), "Downloads"
+            )
             atexit.register(self.__restore_os_proxy)
 
             self.__translations = load_translations()
@@ -348,6 +352,7 @@ class Web(Scraper):
         )
 
         super().on_post_acquisition_finished()
+        self.__restore_default_download_directory()
 
         self.__enable_all()
 
@@ -425,6 +430,16 @@ class Web(Scraper):
 
     # END LOCAL ACQUISITON METHODS
 
+    def __restore_default_download_directory(self):
+        for index in range(self.ui.tabs.count()):
+            widget = self.ui.tabs.widget(index)
+            if widget and hasattr(widget, "setDownloadDirectory"):
+                widget.setDownloadDirectory(self.__default_download_directory)
+        debug(
+            f"ℹ️ restored default download directory={self.__default_download_directory}",
+            context=get_context(self),
+        )
+
     # START NAVIGATION METHODS
     def __back(self):
         self.ui.tabs.currentWidget().back()
@@ -482,9 +497,14 @@ class Web(Scraper):
 
         web_view.setUserAgent(user_agent)
 
-        web_view.urlChanged.connect(
-            lambda qurl, browser=web_view: self.__update_urlbar(qurl, browser)
-        )
+        if hasattr(web_view, "navigationDisplayUrlChanged"):
+            web_view.navigationDisplayUrlChanged.connect(
+                lambda qurl, browser=web_view: self.__update_urlbar(qurl, browser)
+            )
+        else:
+            web_view.urlChanged.connect(
+                lambda qurl, browser=web_view: self.__update_urlbar(qurl, browser)
+            )
 
         web_view.downloadStarted.connect(self.__handle_download_item_started)
         web_view.downloadProgress.connect(self.__handle_download_item_progress)
@@ -527,24 +547,65 @@ class Web(Scraper):
     # END TAB METHODS
 
     # START DOWNLOAD METHODS
-    def __handle_download_item_started(self, download):
+    def __handle_download_item_started(
+        self, suggested_filename="", destination_path=""
+    ):
+        self.__download_progress_debug_last = -1
+        # macOS bridge emits (suggestedFilename, destinationPath) as strings.
+        # Keep this defensive to avoid runtime crashes on unexpected payloads.
+        if hasattr(suggested_filename, "downloadFileName"):
+            file_name = suggested_filename.downloadFileName()
+        else:
+            file_name = str(suggested_filename or "")
+        if hasattr(destination_path, "downloadDirectory"):
+            destination = destination_path.downloadDirectory()
+        else:
+            destination = str(destination_path or "")
+        debug(
+            "ℹ️ download started " f"file={file_name} " f"destination={destination}",
+            context=get_context(self),
+        )
         self._reset_acquisition_indicators(True)
 
     def __handle_download_item_progress(self, bytes_received, bytes_total):
         if bytes_total > 0:
             download_percentage = int(bytes_received * 100 / bytes_total)
+            if download_percentage != self.__download_progress_debug_last:
+                debug(
+                    "ℹ️ download progress "
+                    f"{download_percentage}% "
+                    f"({bytes_received}/{bytes_total} bytes)",
+                    context=get_context(self),
+                )
+                self.__download_progress_debug_last = download_percentage
             self.acquisition.progress_bar.setValue(download_percentage)
+        else:
+            if self.__download_progress_debug_last != -2:
+                debug(
+                    f"ℹ️ download progress unknown total bytes_received={bytes_received}",
+                    context=get_context(self),
+                )
+                self.__download_progress_debug_last = -2
 
     def __handle_download_item_finished(self, download):
-        filename = download.downloadFileName()
+        filename_only = download.downloadFileName()
         directory = download.downloadDirectory()
-        filename = os.path.join(directory, filename)
+        filename = os.path.join(directory, filename_only)
         url = download.downloadUrl()
+        debug(
+            "ℹ️ download finished " f"file={filename} " f"url={url.toString()}",
+            context=get_context(self),
+        )
 
         for index in range(self.ui.tabs.count()):
             if self.ui.tabs.widget(index).url() == url:
+                debug(
+                    f"ℹ️ closing download tab index={index}",
+                    context=get_context(self),
+                )
                 self.ui.tabs.setCurrentIndex(index - 1)
                 self.ui.tabs.removeTab(index)
+                break
 
         self.acquisition.status_bar.setText(
             self.__translations["DOWNLOADED"] + ": " + filename
@@ -555,6 +616,7 @@ class Web(Scraper):
         loop.exec()
 
         self._reset_acquisition_indicators(False)
+        debug("ℹ️ download UI indicators reset", context=get_context(self))
 
     # END DOWNLOAD METHODS
 
