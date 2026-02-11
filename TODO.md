@@ -1,4 +1,5 @@
 - ISSUE CONOSCIUTA: mitproxy non funziona corettamente con amazon.com
+- ISSUE CONOSCIUTA: su google per scorrere il popup è un problema
 
 
 Errore de merda

@@ -1051,16 +1051,16 @@ resolved_reference = "507b90d8a6342aa26fd381b526fc579005739c85"
 
 [[package]]
 name = "fit-webview-bridge"
-version = "0.2.9a5"
+version = "0.2.9a7"
 description = "Qt native WebView bridge with PySide6 bindings"
 optional = false
 python-versions = "<3.14,>=3.11"
 groups = ["main"]
 files = [
-    {file = "fit_webview_bridge-0.2.9a5-cp311-cp311-macosx_11_0_arm64.whl", hash = "sha256:9dc83f0b0171fa64c06839b90106239bb3a3c674feb75b063babfa8c41a0dbc1"},
-    {file = "fit_webview_bridge-0.2.9a5-cp312-cp312-macosx_11_0_arm64.whl", hash = "sha256:31e12b0f005be53494d1e4a5b46463a230ee661b0c47c554a9de52ce1ba10811"},
-    {file = "fit_webview_bridge-0.2.9a5-cp313-cp313-macosx_11_0_arm64.whl", hash = "sha256:141ae511b9ea24c11d86020e4e0ac4adb28faf606d016beee4470ea4cc6eb199"},
-    {file = "fit_webview_bridge-0.2.9a5.tar.gz", hash = "sha256:6ceabe11a60210dc0457feb78580272f054a3d39eb01b5cb2905da5e368f8411"},
+    {file = "fit_webview_bridge-0.2.9a7-cp311-cp311-macosx_11_0_arm64.whl", hash = "sha256:19b5fe9d30d14b4e8649adc30ac269fc930779beca8bf8762babf9cc3f7d1b81"},
+    {file = "fit_webview_bridge-0.2.9a7-cp312-cp312-macosx_11_0_arm64.whl", hash = "sha256:81b49184a57bb4368de9e35cbb9e17db9e5650c9fa0f6d4e37ec4f8fa749d11f"},
+    {file = "fit_webview_bridge-0.2.9a7-cp313-cp313-macosx_11_0_arm64.whl", hash = "sha256:4c501c4502ef696186072c22e778c74b871a6aad25376f4fb9318fc5764bbff4"},
+    {file = "fit_webview_bridge-0.2.9a7.tar.gz", hash = "sha256:77323ccd84a28d228eef58916e7c22f49f3d252d395d534db20d93a1769d14de"},
 ]
 
 [package.dependencies]
@@ -4715,4 +4715,4 @@ cffi = ["cffi (>=1.11)"]
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.11,<3.14"
-content-hash = "180de92904d8f5249f11c6f32bd5ce637f11473fd488382e7d1f71f3cd8883bd"
+content-hash = "b9de7f5c195369457864fb854600b328458efd76b008a238fd1c28f6e11223e2"
