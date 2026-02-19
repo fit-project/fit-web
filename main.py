@@ -79,10 +79,28 @@ def _log_bootstrap_result(result: BootstrapResult) -> None:
 
 
 def _mac_ok():
-    if sys.platform != "darwin":
+    if get_platform() != "macos":
         return True
     ver = platform.mac_ver()[0]  # es. '14.5.1' su Sonoma
     return ver and Version(ver) >= Version("11.3")
+
+
+def _ensure_macos_or_exit() -> None:
+    if get_platform() == "macos":
+        return
+
+    __translations = load_translations()
+    show_dialog(
+        "error",
+        __translations.get("UNSUPPORTED_OS_DIALOG_TITLE"),
+        __translations.get("UNSUPPORTED_OS_DIALOG_MESSAGE"),
+        "",
+    )
+    debug(f"❌ Unsupported operating system: {get_platform()}", context="main.fit_web")
+    raise SystemExit("❌ Unsupported operating system")
+
+
+_ensure_macos_or_exit()
 
 
 if not _mac_ok():
