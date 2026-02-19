@@ -285,23 +285,60 @@ class Ui_fit_web(object):
         self.horizontalLayout_2.setSpacing(5)
         self.horizontalLayout_2.setObjectName("horizontalLayout_2")
         self.horizontalLayout_2.setContentsMargins(0, 0, 0, 0)
+        self.verify_timestamp_button = QPushButton(self.right_buttons_container)
+        self.verify_timestamp_button.setObjectName("verify_timestamp_button")
+        self.verify_timestamp_button.setMinimumSize(QSize(28, 28))
+        self.verify_timestamp_button.setMaximumSize(QSize(28, 28))
+        self.verify_timestamp_button.setCursor(
+            QCursor(Qt.CursorShape.PointingHandCursor)
+        )
+        self.verify_timestamp_button.setStyleSheet("QToolTip {font:13px;}")
+        icon = QIcon()
+        icon.addFile(
+            ":/images/wizard/images/wizard/verify_timestamp-disabled.png",
+            QSize(),
+            QIcon.Mode.Normal,
+            QIcon.State.Off,
+        )
+        self.verify_timestamp_button.setIcon(icon)
+        self.verify_timestamp_button.setIconSize(QSize(20, 20))
+
+        self.horizontalLayout_2.addWidget(self.verify_timestamp_button)
+
+        self.verify_pec_button = QPushButton(self.right_buttons_container)
+        self.verify_pec_button.setObjectName("verify_pec_button")
+        self.verify_pec_button.setMinimumSize(QSize(28, 28))
+        self.verify_pec_button.setMaximumSize(QSize(28, 28))
+        self.verify_pec_button.setStyleSheet("QToolTip {font:13px;}")
+        icon1 = QIcon()
+        icon1.addFile(
+            ":/images/wizard/images/wizard/verify_pec-disabled.png",
+            QSize(),
+            QIcon.Mode.Normal,
+            QIcon.State.Off,
+        )
+        self.verify_pec_button.setIcon(icon1)
+        self.verify_pec_button.setIconSize(QSize(20, 20))
+
+        self.horizontalLayout_2.addWidget(self.verify_pec_button)
+
         self.case_button = QPushButton(self.right_buttons_container)
         self.case_button.setObjectName("case_button")
         self.case_button.setEnabled(True)
         self.case_button.setMinimumSize(QSize(28, 28))
         self.case_button.setMaximumSize(QSize(28, 28))
         self.case_button.setStyleSheet("QToolTip {font:13px;}")
-        icon = QIcon()
-        icon.addFile(
+        icon2 = QIcon()
+        icon2.addFile(
             ":/icons/icons/icon_case.png", QSize(), QIcon.Mode.Normal, QIcon.State.On
         )
-        icon.addFile(
+        icon2.addFile(
             ":/icons/icons/icon_case-disabled.png",
             QSize(),
             QIcon.Mode.Disabled,
             QIcon.State.On,
         )
-        self.case_button.setIcon(icon)
+        self.case_button.setIcon(icon2)
         self.case_button.setIconSize(QSize(20, 20))
 
         self.horizontalLayout_2.addWidget(self.case_button)
@@ -322,20 +359,20 @@ class Ui_fit_web(object):
         self.configuration_button.setMaximumSize(QSize(28, 28))
         self.configuration_button.setCursor(QCursor(Qt.CursorShape.PointingHandCursor))
         self.configuration_button.setStyleSheet("QToolTip {font:13px;}")
-        icon1 = QIcon()
-        icon1.addFile(
+        icon3 = QIcon()
+        icon3.addFile(
             ":/icons/icons/icon_settings.png",
             QSize(),
             QIcon.Mode.Normal,
             QIcon.State.On,
         )
-        icon1.addFile(
+        icon3.addFile(
             ":/icons/icons/icon_settings-disabled.png",
             QSize(),
             QIcon.Mode.Disabled,
             QIcon.State.On,
         )
-        self.configuration_button.setIcon(icon1)
+        self.configuration_button.setIcon(icon3)
         self.configuration_button.setIconSize(QSize(20, 20))
 
         self.horizontalLayout_2.addWidget(self.configuration_button)
@@ -345,20 +382,20 @@ class Ui_fit_web(object):
         self.minimize_button.setMinimumSize(QSize(28, 28))
         self.minimize_button.setMaximumSize(QSize(28, 28))
         self.minimize_button.setCursor(QCursor(Qt.CursorShape.PointingHandCursor))
-        icon2 = QIcon()
-        icon2.addFile(
+        icon4 = QIcon()
+        icon4.addFile(
             ":/icons/icons/icon_minimize.png",
             QSize(),
             QIcon.Mode.Normal,
             QIcon.State.On,
         )
-        icon2.addFile(
+        icon4.addFile(
             ":/icons/icons/icon_minimize-disabled.png",
             QSize(),
             QIcon.Mode.Disabled,
             QIcon.State.On,
         )
-        self.minimize_button.setIcon(icon2)
+        self.minimize_button.setIcon(icon4)
         self.minimize_button.setIconSize(QSize(20, 20))
 
         self.horizontalLayout_2.addWidget(self.minimize_button)
@@ -369,17 +406,17 @@ class Ui_fit_web(object):
         self.close_button.setMinimumSize(QSize(28, 28))
         self.close_button.setMaximumSize(QSize(28, 28))
         self.close_button.setCursor(QCursor(Qt.CursorShape.PointingHandCursor))
-        icon3 = QIcon()
-        icon3.addFile(
+        icon5 = QIcon()
+        icon5.addFile(
             ":/icons/icons/icon_close.png", QSize(), QIcon.Mode.Normal, QIcon.State.On
         )
-        icon3.addFile(
+        icon5.addFile(
             ":/icons/icons/icon_close-disabled.png",
             QSize(),
             QIcon.Mode.Disabled,
             QIcon.State.On,
         )
-        self.close_button.setIcon(icon3)
+        self.close_button.setIcon(icon5)
         self.close_button.setIconSize(QSize(20, 20))
 
         self.horizontalLayout_2.addWidget(self.close_button)
@@ -436,20 +473,20 @@ class Ui_fit_web(object):
         self.back_button.setMinimumSize(QSize(25, 25))
         self.back_button.setMaximumSize(QSize(25, 25))
         self.back_button.setStyleSheet("")
-        icon4 = QIcon()
-        icon4.addFile(
+        icon6 = QIcon()
+        icon6.addFile(
             ":/images/toolbar/images/toolbar/back.png",
             QSize(),
             QIcon.Mode.Normal,
             QIcon.State.On,
         )
-        icon4.addFile(
+        icon6.addFile(
             ":/images/toolbar/images/toolbar/back-disabled.png",
             QSize(),
             QIcon.Mode.Disabled,
             QIcon.State.On,
         )
-        self.back_button.setIcon(icon4)
+        self.back_button.setIcon(icon6)
         self.back_button.setIconSize(QSize(25, 25))
 
         self.toolbar_left.addWidget(self.back_button)
@@ -457,20 +494,20 @@ class Ui_fit_web(object):
         self.forward_button = QPushButton(self.toolbar_container)
         self.forward_button.setObjectName("forward_button")
         self.forward_button.setMaximumSize(QSize(25, 25))
-        icon5 = QIcon()
-        icon5.addFile(
+        icon7 = QIcon()
+        icon7.addFile(
             ":/images/toolbar/images/toolbar/forward.png",
             QSize(),
             QIcon.Mode.Normal,
             QIcon.State.On,
         )
-        icon5.addFile(
+        icon7.addFile(
             ":/images/toolbar/images/toolbar/forward-disabled.png",
             QSize(),
             QIcon.Mode.Disabled,
             QIcon.State.On,
         )
-        self.forward_button.setIcon(icon5)
+        self.forward_button.setIcon(icon7)
         self.forward_button.setIconSize(QSize(25, 25))
 
         self.toolbar_left.addWidget(self.forward_button)
@@ -480,20 +517,20 @@ class Ui_fit_web(object):
         self.reload_button.setEnabled(True)
         self.reload_button.setMinimumSize(QSize(25, 25))
         self.reload_button.setMaximumSize(QSize(25, 25))
-        icon6 = QIcon()
-        icon6.addFile(
+        icon8 = QIcon()
+        icon8.addFile(
             ":/images/toolbar/images/toolbar/reload.png",
             QSize(),
             QIcon.Mode.Normal,
             QIcon.State.On,
         )
-        icon6.addFile(
+        icon8.addFile(
             ":/images/toolbar/images/toolbar/reload-disabled.png",
             QSize(),
             QIcon.Mode.Disabled,
             QIcon.State.On,
         )
-        self.reload_button.setIcon(icon6)
+        self.reload_button.setIcon(icon8)
         self.reload_button.setIconSize(QSize(25, 25))
 
         self.toolbar_left.addWidget(self.reload_button)
@@ -502,20 +539,20 @@ class Ui_fit_web(object):
         self.home_button.setObjectName("home_button")
         self.home_button.setEnabled(True)
         self.home_button.setMaximumSize(QSize(25, 25))
-        icon7 = QIcon()
-        icon7.addFile(
+        icon9 = QIcon()
+        icon9.addFile(
             ":/images/toolbar/images/toolbar/home.png",
             QSize(),
             QIcon.Mode.Normal,
             QIcon.State.On,
         )
-        icon7.addFile(
+        icon9.addFile(
             ":/images/toolbar/images/toolbar/home-disabled.png",
             QSize(),
             QIcon.Mode.Disabled,
             QIcon.State.On,
         )
-        self.home_button.setIcon(icon7)
+        self.home_button.setIcon(icon9)
         self.home_button.setIconSize(QSize(25, 25))
 
         self.toolbar_left.addWidget(self.home_button)
@@ -560,20 +597,20 @@ class Ui_fit_web(object):
         self.stop_button = QPushButton(self.toolbar_container)
         self.stop_button.setObjectName("stop_button")
         self.stop_button.setMaximumSize(QSize(25, 25))
-        icon8 = QIcon()
-        icon8.addFile(
+        icon10 = QIcon()
+        icon10.addFile(
             ":/images/toolbar/images/toolbar/close.png",
             QSize(),
             QIcon.Mode.Normal,
             QIcon.State.On,
         )
-        icon8.addFile(
+        icon10.addFile(
             ":/images/toolbar/images/toolbar/close-disabled.png",
             QSize(),
             QIcon.Mode.Disabled,
             QIcon.State.On,
         )
-        self.stop_button.setIcon(icon8)
+        self.stop_button.setIcon(icon10)
         self.stop_button.setIconSize(QSize(25, 25))
 
         self.tool_bar_center.addWidget(self.stop_button)
@@ -600,20 +637,20 @@ class Ui_fit_web(object):
         self.start_acquisition_button.setObjectName("start_acquisition_button")
         self.start_acquisition_button.setEnabled(True)
         self.start_acquisition_button.setMaximumSize(QSize(25, 25))
-        icon9 = QIcon()
-        icon9.addFile(
+        icon11 = QIcon()
+        icon11.addFile(
             ":/images/toolbar/images/toolbar/start.png",
             QSize(),
             QIcon.Mode.Normal,
             QIcon.State.On,
         )
-        icon9.addFile(
+        icon11.addFile(
             ":/images/toolbar/images/toolbar/start-disabled.png",
             QSize(),
             QIcon.Mode.Disabled,
             QIcon.State.On,
         )
-        self.start_acquisition_button.setIcon(icon9)
+        self.start_acquisition_button.setIcon(icon11)
         self.start_acquisition_button.setIconSize(QSize(25, 25))
 
         self.tool_bar_right.addWidget(self.start_acquisition_button)
@@ -622,20 +659,20 @@ class Ui_fit_web(object):
         self.stop_acquisition_button.setObjectName("stop_acquisition_button")
         self.stop_acquisition_button.setEnabled(False)
         self.stop_acquisition_button.setMaximumSize(QSize(25, 25))
-        icon10 = QIcon()
-        icon10.addFile(
+        icon12 = QIcon()
+        icon12.addFile(
             ":/images/toolbar/images/toolbar/stop.png",
             QSize(),
             QIcon.Mode.Normal,
             QIcon.State.On,
         )
-        icon10.addFile(
+        icon12.addFile(
             ":/images/toolbar/images/toolbar/stop-disabled.png",
             QSize(),
             QIcon.Mode.Disabled,
             QIcon.State.On,
         )
-        self.stop_acquisition_button.setIcon(icon10)
+        self.stop_acquisition_button.setIcon(icon12)
         self.stop_acquisition_button.setIconSize(QSize(25, 25))
 
         self.tool_bar_right.addWidget(self.stop_acquisition_button)
@@ -657,20 +694,20 @@ class Ui_fit_web(object):
         )
         self.screenshot_visible_area_button.setEnabled(False)
         self.screenshot_visible_area_button.setMaximumSize(QSize(25, 25))
-        icon11 = QIcon()
-        icon11.addFile(
+        icon13 = QIcon()
+        icon13.addFile(
             ":/images/toolbar/images/toolbar/camera.png",
             QSize(),
             QIcon.Mode.Normal,
             QIcon.State.On,
         )
-        icon11.addFile(
+        icon13.addFile(
             ":/images/toolbar/images/toolbar/camera-disabled.png",
             QSize(),
             QIcon.Mode.Disabled,
             QIcon.State.On,
         )
-        self.screenshot_visible_area_button.setIcon(icon11)
+        self.screenshot_visible_area_button.setIcon(icon13)
         self.screenshot_visible_area_button.setIconSize(QSize(25, 25))
 
         self.tool_bar_right.addWidget(self.screenshot_visible_area_button)
@@ -681,20 +718,20 @@ class Ui_fit_web(object):
         )
         self.screenshot_selected_area_button.setEnabled(False)
         self.screenshot_selected_area_button.setMaximumSize(QSize(25, 25))
-        icon12 = QIcon()
-        icon12.addFile(
+        icon14 = QIcon()
+        icon14.addFile(
             ":/images/toolbar/images/toolbar/select.png",
             QSize(),
             QIcon.Mode.Normal,
             QIcon.State.On,
         )
-        icon12.addFile(
+        icon14.addFile(
             ":/images/toolbar/images/toolbar/select-disabled.png",
             QSize(),
             QIcon.Mode.Disabled,
             QIcon.State.On,
         )
-        self.screenshot_selected_area_button.setIcon(icon12)
+        self.screenshot_selected_area_button.setIcon(icon14)
         self.screenshot_selected_area_button.setIconSize(QSize(25, 25))
 
         self.tool_bar_right.addWidget(self.screenshot_selected_area_button)
@@ -704,20 +741,20 @@ class Ui_fit_web(object):
         self.screenshot_full_page_button.setEnabled(False)
         self.screenshot_full_page_button.setMinimumSize(QSize(25, 25))
         self.screenshot_full_page_button.setMaximumSize(QSize(25, 25))
-        icon13 = QIcon()
-        icon13.addFile(
+        icon15 = QIcon()
+        icon15.addFile(
             ":/images/toolbar/images/toolbar/scroll.png",
             QSize(),
             QIcon.Mode.Normal,
             QIcon.State.On,
         )
-        icon13.addFile(
+        icon15.addFile(
             ":/images/toolbar/images/toolbar/scroll-disabled.png",
             QSize(),
             QIcon.Mode.Disabled,
             QIcon.State.On,
         )
-        self.screenshot_full_page_button.setIcon(icon13)
+        self.screenshot_full_page_button.setIcon(icon15)
         self.screenshot_full_page_button.setIconSize(QSize(25, 25))
 
         self.tool_bar_right.addWidget(self.screenshot_full_page_button)
@@ -899,6 +936,18 @@ class Ui_fit_web(object):
         self.title_right_info.setText(
             QCoreApplication.translate("fit_web", "Web Scraper", None)
         )
+        # if QT_CONFIG(tooltip)
+        self.verify_timestamp_button.setToolTip(
+            QCoreApplication.translate("fit_web", "Verify timestamp", None)
+        )
+        # endif // QT_CONFIG(tooltip)
+        self.verify_timestamp_button.setText("")
+        # if QT_CONFIG(tooltip)
+        self.verify_pec_button.setToolTip(
+            QCoreApplication.translate("fit_web", "Verify PEC", None)
+        )
+        # endif // QT_CONFIG(tooltip)
+        self.verify_pec_button.setText("")
         # if QT_CONFIG(tooltip)
         self.case_button.setToolTip(
             QCoreApplication.translate("fit_web", "Case info", None)

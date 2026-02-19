@@ -20,6 +20,10 @@ from fit_common.gui.error import Error
 from fit_common.gui.ui_translation import translate_ui
 from fit_configurations.controller.tabs.general.general import GeneralController
 from fit_scraper.scraper import AcquisitionStatus, Scraper
+from fit_verify_pdf_timestamp.view.verify_pdf_timestamp import (
+    VerifyPDFTimestamp as VerifyPDFTimestampView,
+)
+from fit_verify_pec.view.verify_pec import VerifyPec as VerifyPecView
 from fit_webview_bridge import SystemWebView
 from PySide6 import QtCore, QtGui, QtWidgets
 
@@ -118,6 +122,16 @@ class Web(Scraper):
         # CONFIGURATION BUTTON
         self.ui.configuration_button.clicked.connect(self.configuration_dialog)
 
+        # VERIFY TIMESTAMP BUTTON
+        self.ui.verify_timestamp_button.clicked.connect(self.__verify_timestamp)
+        if self.wizard is not None:
+            self.ui.verify_timestamp_button.hide()
+
+        # VERIFY PEC BUTTON
+        self.ui.verify_pec_button.clicked.connect(self.__verify_pec)
+        if self.wizard is not None:
+            self.ui.verify_pec_button.hide()
+
         # CASE BUTTON
         self.ui.case_button.clicked.connect(self.show_case_info)
 
@@ -171,7 +185,10 @@ class Web(Scraper):
         translate_ui(self.__translations, self)
 
     def eventFilter(self, watched, event):
-        if watched == self.ui.content_bottom and event.type() == QtCore.QEvent.Type.Resize:
+        if (
+            watched == self.ui.content_bottom
+            and event.type() == QtCore.QEvent.Type.Resize
+        ):
             self.__position_find_bar()
         return super().eventFilter(watched, event)
 
@@ -358,7 +375,9 @@ class Web(Scraper):
         self.__find_total = max(0, int(total))
         self.__find_counter.setText(f"{self.__find_index}/{self.__find_total}")
         if self.__find_total == 0:
-            self.__find_counter.setStyleSheet("color: rgb(170, 60, 60); font-size: 14px;")
+            self.__find_counter.setStyleSheet(
+                "color: rgb(170, 60, 60); font-size: 14px;"
+            )
             self.__find_input.setStyleSheet(
                 "border: 1px solid rgb(210, 120, 120);"
                 "background: rgb(255, 245, 245);"
@@ -368,7 +387,9 @@ class Web(Scraper):
                 "border-radius: 6px;"
             )
         else:
-            self.__find_counter.setStyleSheet("color: rgb(70, 70, 70); font-size: 14px;")
+            self.__find_counter.setStyleSheet(
+                "color: rgb(70, 70, 70); font-size: 14px;"
+            )
             self.__find_input.setStyleSheet(
                 "border: none;"
                 "background: transparent;"
@@ -449,7 +470,9 @@ class Web(Scraper):
             if forward:
                 next_index = (self.__find_index % self.__find_total) + 1
             else:
-                next_index = ((self.__find_index - 2 + self.__find_total) % self.__find_total) + 1
+                next_index = (
+                    (self.__find_index - 2 + self.__find_total) % self.__find_total
+                ) + 1
             self.__set_find_counter(next_index, self.__find_total)
 
         self.__request_js_result(current, script, on_step_result)
@@ -1038,7 +1061,15 @@ class Web(Scraper):
         debug("❌ Mitm capture stop failed", context=get_context(self))
         return False
 
+    def __verify_timestamp(self):
+        verify_timestamp = VerifyPDFTimestampView(self.wizard)
+        verify_timestamp.show()
+
+    def __verify_pec(self):
+        verify_pec = VerifyPecView(self.wizard)
+        verify_pec.show()
+
     def closeEvent(self, event):
-        if self._Scraper__can_close() and self._Scraper__wizard is None:
+        if self.can_close() and self.wizard is None:
             self.mitm_runner.stop_by_pid()
         return super().closeEvent(event)

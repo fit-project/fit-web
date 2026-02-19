@@ -1,8 +1,6 @@
 - ISSUE CONOSCIUTA: mitproxy non funziona corettamente con amazon.com
 - ISSUE CONOSCIUTA: su google per scorrere il popup è un problema
 
-- Devo aggiungere i verify
-
 
 Errore de merda
 [DEBUG] 2026-02-04T11:02:40 - privilege: sudo failed, exit code: -11
