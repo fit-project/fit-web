@@ -9,11 +9,19 @@
 
 
 import os
+import shutil
+import sys
+import tempfile
+import types
+from importlib.metadata import PackageNotFoundError, version as package_version
 
 from fit_acquisition.tasks.task import Task
 from fit_acquisition.tasks.task_worker import TaskWorker
+from fit_bootstrap.constants import FIT_USER_APP_PATH
 from fit_common.core import debug, get_context, log_exception
 from fit_common.gui.utils import Status
+from har2warc.har2warc import har2warc
+from multipart import ParserError
 
 from fit_web.lang import load_translations
 
@@ -31,13 +39,10 @@ class TaskSavePageWorker(TaskWorker):
             self.acquisition_directory = self.options["acquisition_directory"]
             self.current_widget = self.options["current_widget"]
 
-            acquisition_page_folder = os.path.join(
-                self.acquisition_directory, "acquisition_page"
-            )
-            if not os.path.isdir(acquisition_page_folder):
-                os.makedirs(acquisition_page_folder)
-            self.current_widget.saveResourcesFinished.connect(self.__finished)
-            self.current_widget.save_resources(acquisition_page_folder)
+            debug("ℹ️ Starting WACZ build", context=get_context(self))
+            self._build_wacz()
+            debug("✅ WACZ build completed", context=get_context(self))
+            self.finished.emit()
 
         except Exception as e:
             debug(
@@ -54,8 +59,110 @@ class TaskSavePageWorker(TaskWorker):
                 }
             )
 
-    def __finished(self):
-        self.finished.emit()
+    def _get_capture_har_path(self) -> str | None:
+        base_path = os.environ.get(FIT_USER_APP_PATH)
+        if not base_path:
+            return None
+        return os.path.join(base_path, "mitmproxy", "capture.har")
+
+    def _build_wacz(self) -> None:
+        har_path = self._get_capture_har_path()
+        if not har_path or not os.path.exists(har_path):
+            raise FileNotFoundError("capture.har not found")
+        debug(f"ℹ️ capture.har: {har_path}", context=get_context(self))
+        with tempfile.TemporaryDirectory(
+            prefix="fit_wacz_", dir=self.acquisition_directory
+        ) as temp_dir:
+            debug(f"ℹ️ wacz temp_dir: {temp_dir}", context=get_context(self))
+            warc_path = os.path.join(temp_dir, "data.warc.gz")
+            debug("ℹ️ Converting HAR to WARC", context=get_context(self))
+            har2warc(
+                har_path,
+                warc_path,
+                gzip=True,
+                filename=warc_path,
+                rec_title="FIT capture",
+            )
+            debug(f"✅ WARC created: {warc_path}", context=get_context(self))
+
+            wacz_path = os.path.join(temp_dir, "acquisition_page.wacz")
+            debug("ℹ️ Creating WACZ acquisition_page", context=get_context(self))
+            try:
+                result = self._create_wacz(warc_path, wacz_path)
+            except ParserError as e:
+                debug(
+                    "⚠️ WACZ indexing failed parsing multipart; retrying without POST append",
+                    str(e),
+                    context=get_context(self),
+                )
+                result = self._create_wacz(
+                    warc_path, wacz_path, disable_post_append=True
+                )
+            if result not in (0, None):
+                raise RuntimeError(f"WACZ creation failed (code={result})")
+            debug(f"✅ WACZ created: {wacz_path}", context=get_context(self))
+
+            final_wacz = os.path.join(
+                self.acquisition_directory, "acquisition_page.wacz"
+            )
+            shutil.copyfile(wacz_path, final_wacz)
+            debug(f"✅ WACZ saved: {final_wacz}", context=get_context(self))
+
+    def _create_wacz(
+        self, warc_path: str, wacz_path: str, disable_post_append: bool = False
+    ) -> int | None:
+        self._ensure_pkg_resources_compat()
+        from wacz import main as wacz_main
+
+        args = [
+            "create",
+            warc_path,
+            "-o",
+            wacz_path,
+            "--detect-pages",
+            "--text",
+        ]
+        if not disable_post_append:
+            return wacz_main.main(args)
+
+        from wacz.waczindexer import WACZIndexer as BaseWACZIndexer
+
+        class NoPostAppendWACZIndexer(BaseWACZIndexer):
+            def __init__(self, *init_args, **init_kwargs):
+                init_kwargs["post_append"] = False
+                super().__init__(*init_args, **init_kwargs)
+
+        original = wacz_main.WACZIndexer
+        wacz_main.WACZIndexer = NoPostAppendWACZIndexer
+        try:
+            return wacz_main.main(args)
+        finally:
+            wacz_main.WACZIndexer = original
+
+    @staticmethod
+    def _ensure_pkg_resources_compat() -> None:
+        try:
+            import pkg_resources  # noqa: F401
+            return
+        except ModuleNotFoundError:
+            pass
+
+        shim = types.ModuleType("pkg_resources")
+
+        class _Dist:
+            def __init__(self, pkg_name: str):
+                self.version = package_version(pkg_name)
+
+        def _get_distribution(pkg_name: str):
+            try:
+                return _Dist(pkg_name)
+            except PackageNotFoundError as e:
+                raise ModuleNotFoundError(
+                    f"Distribution not found for '{pkg_name}'"
+                ) from e
+
+        setattr(shim, "get_distribution", _get_distribution)
+        sys.modules["pkg_resources"] = shim
 
 
 class TaskSavePage(Task):

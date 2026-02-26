@@ -1,0 +1,56 @@
+# SPDX-License-Identifier: LGPL-3.0-or-later
+# Copyright (c) 2023 FIT-Project
+
+name: E2E tests
+
+on:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - "fit_web/**"
+      - "main.py"
+      - "tests/e2e/**"
+      - "tests/conftest.py"
+      - "pyproject.toml"
+      - "poetry.lock"
+      - ".github/actions/setup-fit-env/**"
+      - ".github/workflows/e2e-tests.yml"
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  e2e-tests:
+    runs-on: macos-latest
+    timeout-minutes: 30
+    env:
+      QT_QPA_PLATFORM: offscreen
+      PYTHONDONTWRITEBYTECODE: "1"
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup environment
+        uses: ./.github/actions/setup-fit-env
+        with:
+          python-version: "3.12"
+          python-packages: "pytest"
+
+      - name: Run e2e tests
+        run: |
+          set +e
+          python -m pytest -m e2e -q tests/e2e --junitxml=e2e-results.xml
+          rc=$?
+          set -e
+
+          if [ "$rc" -eq 139 ]; then
+            if grep -q 'failures="0"' e2e-results.xml && grep -q 'errors="0"' e2e-results.xml; then
+              echo "Ignoring known PySide6 shutdown segfault after successful E2E assertions (exit 139)."
+              exit 0
+            fi
+          fi
+
+          exit "$rc"

@@ -8,7 +8,9 @@
 ######
 
 import os
+import shutil
 from datetime import datetime
+from json import loads
 
 import numpy as np
 from fit_acquisition.tasks.task import Task
@@ -29,10 +31,92 @@ def screenshot_filename(path, basename, extention=".png"):
 
 
 class TaskFullPageScreenShotWorker(TaskWorker):
-
     def __init__(self):
         super().__init__()
         self.__translations = load_translations()
+
+        self.__capture_queue = []
+        self.__capture_files = []
+        self.__current_token = None
+        self.__start_point_y = 0
+        self.__current_widget = None
+        self.__acquisistion_directory = None
+        self.__screenshot_directory = None
+        self.__is_task = False
+        self.__connected = False
+        self.__full_page_folder = None
+        self.__js_result_handler = None
+
+    def __ensure_connected(self):
+        if not self.__connected:
+            self.__current_widget.captureFinished.connect(self._on_capture_finished)
+            self.__connected = True
+
+    def __scroll_and_shoot(self):
+        if not self.__capture_queue:
+            missing_files = [i for i in self.__capture_files if not os.path.isfile(i)]
+            if missing_files:
+                debug(
+                    f"⚠️ missing capture files count={len(missing_files)}",
+                    context=get_context(self),
+                )
+            existing_files = [i for i in self.__capture_files if os.path.isfile(i)]
+            if not existing_files:
+                debug("❌ no capture files found", context=get_context(self))
+                return
+
+            imgs = [Image.open(i) for i in existing_files]
+            min_shape = sorted([(np.sum(i.size), i.size) for i in imgs])[0][1]
+            stacked = np.vstack([i.resize(min_shape) for i in imgs])
+            out = Image.fromarray(stacked)
+
+            whole_img_filename = screenshot_filename(
+                self.__screenshot_directory,
+                f"full_page_{self.__current_widget.url().host()}",
+            )
+            if self.__is_task:
+                whole_img_filename = os.path.join(
+                    self.__acquisistion_directory, "acquisition_page.png"
+                )
+
+            out.save(whole_img_filename)
+            if not self.__is_task and self.__full_page_folder:
+                try:
+                    shutil.rmtree(self.__full_page_folder)
+                except OSError as e:
+                    debug(
+                        f"❌ remove full_page_folder failed: {e}",
+                        context=get_context(self),
+                    )
+
+            self.__current_widget.evaluateJavaScript(
+                f"window.scrollTo(0, {self.__start_point_y});"
+            )
+            return
+
+        y, fname = self.__capture_queue.pop(0)
+
+        self.__current_widget.evaluateJavaScript(f"window.scrollTo(0, {y});")
+
+        loop = QtCore.QEventLoop()
+        QtCore.QTimer.singleShot(120, loop.quit)
+        loop.exec()
+
+        self.__current_token = self.__current_widget.captureVisiblePage(fname)
+
+        self.__capture_files.append(fname)
+
+    def _on_capture_finished(self, token, ok, filePath, error):
+        # filtra: gestisci solo il token corrente
+        if self.__current_token is not None and token != self.__current_token:
+            return
+        self.__current_token = None
+
+        if not ok:
+            raise ValueError(error or "captureVisiblePage failed")
+
+        # passa allo step successivo
+        self.__scroll_and_shoot()
 
     def take_screenshot(
         self,
@@ -41,76 +125,79 @@ class TaskFullPageScreenShotWorker(TaskWorker):
         screenshot_directory=None,
         is_task=False,
     ):
+        self.__current_widget = current_widget
+        self.__acquisistion_directory = acquisition_directory
+        self.__screenshot_directory = screenshot_directory
+        self.__is_task = is_task
 
-        current_widget = current_widget
-        acquisition_directory = acquisition_directory
+        if self.__js_result_handler is not None:
+            try:
+                current_widget.javaScriptResult.disconnect(self.__js_result_handler)
+            except (TypeError, RuntimeError):
+                pass
+            self.__js_result_handler = None
 
-        if acquisition_directory is not None:
-            full_page_folder = os.path.join(
-                acquisition_directory
-                + "/full_page/{}/".format(current_widget.url().host())
-            )
-            if not os.path.isdir(full_page_folder):
-                os.makedirs(full_page_folder)
+        # 1) metrics
+        __token = current_widget.evaluateJavaScriptWithResult(
+            "(() => ({ y: window.scrollY,"
+            "         h: Math.max(document.body.scrollHeight, document.documentElement.scrollHeight),"
+            "         vh: window.innerHeight }))()"
+        )
 
-            start_point_y = current_widget.page().scrollPosition().y()
+        def on_javascript_result(result, token, error):
+            if token != __token:
+                return
+            try:
+                if error:
+                    raise ValueError(error)
+            finally:
+                try:
+                    current_widget.javaScriptResult.disconnect(on_javascript_result)
+                except (TypeError, RuntimeError):
+                    pass
+                self.__js_result_handler = None
 
-            # move page on top
-            current_widget.page().runJavaScript("window.scrollTo(0, 0);")
+            page_metrics = loads(result) if isinstance(result, str) else result
+            self.__start_point_y = page_metrics["y"]
 
-            next = 0
+            # 2) Create the output directory and build the capture queue
+            full_page_folder = None
+            parts_root = self.__screenshot_directory or acquisition_directory
+            if parts_root is not None:
+                full_page_folder = os.path.join(
+                    parts_root, f"full_page_parts/{current_widget.url().host()}/"
+                )
+                os.makedirs(full_page_folder, exist_ok=True)
+            self.__full_page_folder = full_page_folder
+
+            # scroll to the top
+            current_widget.evaluateJavaScript("window.scrollTo(0, 0);")
+
+            step = max(1, int(page_metrics["vh"]))
+            end = int(page_metrics["h"])
+            self.__capture_queue = []
+            self.__capture_files = []
+
+            y = 0
             part = 0
-            step = current_widget.height()
-            end = current_widget.page().contentsSize().toSize().height()
+            while y < end:
+                fname = screenshot_filename(full_page_folder, f"part_{part}")
+                self.__capture_queue.append((y, fname))
+                y += step
+                part += 1
+
+            # 3) connect the signal and start the capture chain
+            self.__ensure_connected()
+
+            # small initial delay
             loop = QtCore.QEventLoop()
-            QtCore.QTimer.singleShot(500, loop.quit)
+            QtCore.QTimer.singleShot(120, loop.quit)
             loop.exec()
 
-            images = []
+            self.__scroll_and_shoot()
 
-            while next < end:
-                filename = screenshot_filename(full_page_folder, "part_" + str(part))
-                if next == 0:
-                    current_widget.grab().save(filename)
-                else:
-                    current_widget.page().runJavaScript(
-                        "window.scrollTo({}, {});".format(0, next)
-                    )
-
-                    ### Waiting everything is synchronized
-                    loop = QtCore.QEventLoop()
-                    QtCore.QTimer.singleShot(500, loop.quit)
-                    loop.exec()
-                    current_widget.grab().save(filename)
-
-                images.append(filename)
-
-                part += 1
-                next += step
-
-            # combine all images part in an unique image
-            imgs = [Image.open(i) for i in images]
-            # pick the image which is the smallest, and resize the others to match it (can be arbitrary image shape here)
-            min_shape = sorted([(np.sum(i.size), i.size) for i in imgs])[0][1]
-
-            # for a vertical stacking it is simple: use vstack
-            imgs_comb = np.vstack([i.resize(min_shape) for i in imgs])
-            imgs_comb = Image.fromarray(imgs_comb)
-
-            whole_img_filename = screenshot_filename(
-                screenshot_directory, "full_page" + ""
-            )
-            if is_task:
-                whole_img_filename = os.path.join(
-                    acquisition_directory, "screenshot.png"
-                )
-
-            imgs_comb.save(whole_img_filename)
-
-            if is_task is not True:
-                current_widget.page().runJavaScript(
-                    f"window.scrollTo(0, {start_point_y});"
-                )
+        self.__js_result_handler = on_javascript_result
+        current_widget.javaScriptResult.connect(on_javascript_result)
 
     def start(self):
         try:
