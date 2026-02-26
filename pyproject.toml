@@ -26,6 +26,17 @@ setuptools = ">=75,<81"
 fit-webview-bridge = "v1.0.0-rc1"
 mitmproxy = "^12.2.1"
 
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "--strict-markers"
+pythonpath = ["."]
+markers = [
+    "unit: fast isolated tests",
+    "contract: cross-module contract tests for public interfaces and integrations",
+    "integration: integration tests with real external resources and dependencies",
+    "e2e: end-to-end UI workflow tests",
+]
+
 [build-system]
 requires = ["poetry-core>=2.0.0,<3.0.0"]
 build-backend = "poetry.core.masonry.api"

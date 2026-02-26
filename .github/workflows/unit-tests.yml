@@ -1,0 +1,44 @@
+# SPDX-License-Identifier: LGPL-3.0-or-later
+# Copyright (c) 2023 FIT-Project
+
+name: Unit tests
+
+on:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - "fit_web/**"
+      - "main.py"
+      - "tests/unit/**"
+      - "tests/conftest.py"
+      - "pyproject.toml"
+      - "poetry.lock"
+      - ".github/actions/setup-fit-env/**"
+      - ".github/workflows/unit-tests.yml"
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  unit-tests:
+    runs-on: macos-latest
+    timeout-minutes: 20
+    env:
+      QT_QPA_PLATFORM: offscreen
+      PYTHONDONTWRITEBYTECODE: "1"
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup environment
+        uses: ./.github/actions/setup-fit-env
+        with:
+          python-version: "3.12"
+          python-packages: "pytest"
+
+      - name: Run unit tests
+        run: |
+          python -m pytest -m unit -q tests/unit

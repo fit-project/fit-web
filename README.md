@@ -5,6 +5,29 @@ Provides PySide6-based UI flows and utilities to acquire web content (pages and 
 
 ---
 
+## Release target
+
+Current target: **`v1.0.0`**.
+
+Scope of this first release:
+- Support **only macOS** (not Windows/Linux yet).
+- Publish a stable CI pipeline focused first on the **test chain** (`unit`, `contract`, `integration`, `e2e`).
+- Use this validated baseline to open a dedicated development branch for future Windows/Linux support.
+
+Roadmap:
+- planned backend expansion to Windows and Linux
+
+---
+
+## Platform support
+
+- Supported OS for `v1.0.0`: **macOS 11.3+**
+- Not supported in `v1.0.0`: Windows, Linux
+
+At runtime, the app enforces this constraint from `main.py` and exits on unsupported platforms.
+
+---
+
 ## 🔐 Forensic design note
 
 > **Note (v3):** `sslkey.log` is no longer generated as part of the acquisition artifacts.  
@@ -25,6 +48,20 @@ Main dependencies are:
 - [`fit-webview-bridge`](https://github.com/fit-project/fit-webview-bridge) – OS native webview
 
 See `pyproject.toml` for full details.
+
+`fit-web` also depends on these FIT modules in the full ecosystem workflow:
+- `fit-acquisition`
+- `fit-assets`
+- `fit-bootstrap`
+- `fit-cases`
+- `fit-common`
+- `fit-configurations`
+- `fit-scraper`
+- `fit-verify-pdf-timestamp`
+- `fit-verify-pec`
+- `fit-webview-bridge`
+
+Each module above has its own dedicated CI pipeline.
 ---
 
 ## Local checks (same as CI)
@@ -63,6 +100,8 @@ pytest -m integration -q tests
 # end-to-end smoke tests
 pytest -m e2e -q tests
 ```
+
+CI priority for `v1.0.0` is this test chain.
 
 ### 3) Quality and security checks
 ```bash
@@ -104,6 +143,8 @@ Temporary security exceptions used by the command above:
     poetry install
     poetry run python main.py
 ```
+
+Note: for `v1.0.0`, installation and execution are supported only on macOS.
 
 ---
 

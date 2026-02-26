@@ -37,6 +37,7 @@ class MitmproxyRunner:
             self.output_dir = None
             self.pid_file = None
             self.har_file = None
+            self.control_file = None
             return
         self.output_dir = Path(base_path) / "mitmproxy"
         self.pid_file = self.output_dir / "mitmproxy.pid"

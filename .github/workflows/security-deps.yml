@@ -1,0 +1,41 @@
+# SPDX-License-Identifier: LGPL-3.0-or-later
+# Copyright (c) 2023 FIT-Project
+
+name: Security dependencies audit
+
+on:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - "pyproject.toml"
+      - "poetry.lock"
+      - ".github/actions/setup-fit-env/**"
+      - ".github/workflows/security-deps.yml"
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  pip-audit:
+    runs-on: macos-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup environment
+        uses: ./.github/actions/setup-fit-env
+        with:
+          python-version: "3.12"
+          pre-install-packages: "setuptools>=78.1.1"
+          python-packages: "pip-audit"
+
+      - name: Run pip-audit
+        run: |
+          PIPAPI_PYTHON_LOCATION="$(python -c 'import sys; print(sys.executable)')" \
+            python -m pip_audit --progress-spinner off \
+            --ignore-vuln CVE-2026-27205 \
+            --ignore-vuln PYSEC-2024-60

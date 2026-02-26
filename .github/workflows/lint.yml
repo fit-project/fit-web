@@ -1,0 +1,40 @@
+# SPDX-License-Identifier: LGPL-3.0-or-later
+# Copyright (c) 2023 FIT-Project
+
+name: Lint
+
+on:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - "fit_web/**"
+      - "main.py"
+      - "tests/**"
+      - "pyproject.toml"
+      - "poetry.lock"
+      - ".github/actions/setup-fit-env/**"
+      - ".github/workflows/lint.yml"
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  lint:
+    runs-on: macos-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup environment
+        uses: ./.github/actions/setup-fit-env
+        with:
+          python-version: "3.12"
+          python-packages: "ruff"
+
+      - name: Run ruff
+        run: |
+          ruff check fit_web tests main.py
