@@ -12,37 +12,103 @@ Provides PySide6-based UI flows and utilities to acquire web content (pages and 
 
 ---
 
-## 🔗 Related FIT components
+## Dependencies
 
-This package is designed to work alongside other FIT modules:
+Main dependencies are:
 
+- **Python** >=3.12,<3.14
+- **Poetry** (recommended for development)
+- [`fit-bootstrap`](https://github.com/fit-project/fit-bootstrap)  – preparing and validating the OS environment
 - [`fit-scraper`](https://github.com/fit-project/fit-scraper) – Base utilities and orchestration for acquisition
+- [`fit_verify_pdf_timestamp`](https://github.com/fit-project/fit-verify-pdf-timestamp) – Verifying the timestamp applied to the PDF report
+- [`fit_verify_pec`](https://github.com/fit-project/fit_verify_pec) – Verifying the PEC applied sent during the acquisition process
+- [`fit-webview-bridge`](https://github.com/fit-project/fit-webview-bridge) – OS native webview
 
+See `pyproject.toml` for full details.
 ---
 
-## 🐍 Dependencies
+## Local checks (same as CI)
 
-Main dependencies:
+Run these commands before opening a PR, so failures are caught locally first.
 
-- Python `>=3.11,<3.13`
-- [PySide6](https://pypi.org/project/PySide6/)
+### What each tool does
+- `pytest`: runs automated tests (`unit`, `contract`, `integration` and `e2e` suites).
+- `ruff`: checks code style and common static issues (lint).
+- `mypy`: performs static type checking on annotated Python code.
+- `bandit`: scans source code for common security anti-patterns.
+- `pip-audit`: checks installed dependencies for known CVEs.
 
-See `pyproject.toml` for the full list and version constraints.
-
----
-
-## 📦 Installation
-
-Install with [Poetry](https://python-poetry.org/):
-
+### 1) Base setup
 ```bash
-poetry install
+python3.12 -m venv .venv
+source .venv/bin/activate
+python -m pip install -U pip
+pip install . pytest ruff mypy "bandit[toml]" pip-audit
+python -m pip install --upgrade "setuptools"
 ```
+
+### 2) Test suite
+```bash
+export QT_QPA_PLATFORM=offscreen
+
+# unit tests
+pytest -m unit -q tests
+
+# contract tests
+pytest -m contract -q tests
+
+# integration tests
+pytest -m integration -q tests
+
+# end-to-end smoke tests
+pytest -m e2e -q tests
+```
+
+### 3) Quality and security checks
+```bash
+ruff check fit_web tests
+mypy fit_web
+bandit -c pyproject.toml -r fit_web -q -ll -ii
+PIPAPI_PYTHON_LOCATION="$(python -c 'import sys; print(sys.executable)')" \
+  python -m pip_audit --progress-spinner off \
+  --ignore-vuln CVE-2026-27205 \
+  --ignore-vuln PYSEC-2024-60
+```
+
+Note: `pip-audit` may print skip messages for each package below because they are local packages and are not published on PyPI.
+- `fit-acquisition`
+- `fit-assets`
+- `fit-bootstrap`
+- `fit-cases`
+- `fit-common`
+- `fit-configurations`
+- `fit-scraper`
+- `fit-verify-pdf-timestamp`
+- `fit-verify-pec`
+- `fit-web`
+ 
+Temporary security exceptions used by the command above:
+- `CVE-2026-27205` (`flask`): currently blocked by `mitmproxy 12.2.1`, which requires `flask <= 3.1.2`.
+- `PYSEC-2024-60` (`idna`): currently blocked by `wacz 0.5.0` -> `cdxj-indexer` requiring `idna < 3.0`.
+
+---
+
+## Installation
+
+``` bash
+    python3.12 -m venv .venv
+    source .venv/bin/activate
+    pip install --upgrade pip
+    pip install poetry
+    poetry lock
+    poetry install
+    poetry run python main.py
+```
+
+---
 
 ## Contributing
 1. Fork this repository.  
 2. Create a new branch (`git checkout -b feat/my-feature`).  
 3. Commit your changes using [Conventional Commits](https://www.conventionalcommits.org/en/v1.0.0/).  
 4. Submit a Pull Request describing your modification.
-
----
