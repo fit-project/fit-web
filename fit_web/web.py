@@ -585,7 +585,7 @@ class Web(Scraper):
             )
             self.setEnabled(True)
 
-    def __show_http_https_disclaimer(self) -> bool:
+    def __show_http_https_disclaimer(self) -> None:
         title = self.__translations["HTTP_HTTPS_DISCLAIMER_TITLE"]
         message = self.__translations["HTTP_HTTPS_DISCLAIMER_MESSAGE"]
         error_dialog = Error(

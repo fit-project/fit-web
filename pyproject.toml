@@ -37,6 +37,34 @@ markers = [
     "e2e: end-to-end UI workflow tests",
 ]
 
+[tool.mypy]
+python_version = "3.12"
+explicit_package_bases = true
+files = ["fit_web", "main.py"]
+
+[[tool.mypy.overrides]]
+module = [
+    "fit_acquisition.*",
+    "fit_assets.*",
+    "fit_bootstrap.*",
+    "fit_common.*",
+    "fit_configurations.*",
+    "fit_scraper.*",
+    "fit_verify_pdf_timestamp.*",
+    "fit_verify_pec.*",
+    "fit_webview_bridge",
+    "mitmproxy",
+    "mitmproxy.*",
+    "numpy",
+    "PIL",
+    "PIL.*",
+    "har2warc.*",
+    "multipart",
+    "wacz",
+    "wacz.*",
+]
+ignore_missing_imports = true
+
 [build-system]
 requires = ["poetry-core>=2.0.0,<3.0.0"]
 build-backend = "poetry.core.masonry.api"

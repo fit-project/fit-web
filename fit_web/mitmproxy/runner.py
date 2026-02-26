@@ -15,6 +15,7 @@ import subprocess
 import sys
 import threading
 import time
+from typing import IO
 from pathlib import Path
 
 from fit_bootstrap.constants import (
@@ -178,7 +179,7 @@ class MitmproxyRunner:
         self._write_control("stop")
         return proc
 
-    def _pipe_to_file(self, stream: subprocess.Popen[str] | None, log_file) -> None:
+    def _pipe_to_file(self, stream: IO[str] | None, log_file: IO[str]) -> None:
         if stream is None:
             return
 

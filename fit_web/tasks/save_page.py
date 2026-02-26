@@ -161,7 +161,7 @@ class TaskSavePageWorker(TaskWorker):
                     f"Distribution not found for '{pkg_name}'"
                 ) from e
 
-        shim.get_distribution = _get_distribution
+        setattr(shim, "get_distribution", _get_distribution)
         sys.modules["pkg_resources"] = shim
 
 
