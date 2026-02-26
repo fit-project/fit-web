@@ -25,6 +25,7 @@ numpy = "^2.2.3"
 setuptools = ">=75,<81"
 fit-webview-bridge = "v1.0.0-rc1"
 mitmproxy = "^12.2.1"
+chardet = "<6"
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

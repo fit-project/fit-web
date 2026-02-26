@@ -1,8 +1,10 @@
 - ISSUE CONOSCIUTA: mitproxy non funziona corettamente con amazon.com
 - ISSUE CONOSCIUTA: su google per scorrere il popup è un problema
+- TODO Aggiungere .ico su dialog askpassword
+- TODO rimuovere macos/proxy.py dal bootstrap
 
 
-Errore de merda
+Errore difficile da replicare
 [DEBUG] 2026-02-04T11:02:40 - privilege: sudo failed, exit code: -11
 [DEBUG] 2026-02-04T11:02:40 - ❌ Elevation failed
 [DEBUG] 2026-02-04T11:02:40 - main.fit_web: ❌ Admin permissions denied

@@ -1,0 +1,58 @@
+# SPDX-License-Identifier: LGPL-3.0-or-later
+# Copyright (c) 2023 FIT-Project
+
+name: Release bundle macOS
+
+on:
+  push:
+    tags:
+      - "v*.*.*"
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: write
+
+jobs:
+  build-and-release-macos:
+    runs-on: macos-latest
+    timeout-minutes: 40
+    env:
+      QT_QPA_PLATFORM: offscreen
+      PYTHONDONTWRITEBYTECODE: "1"
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup environment
+        uses: ./.github/actions/setup-fit-env
+        with:
+          python-version: "3.12"
+          python-packages: "pyinstaller"
+
+      - name: Build macOS app bundle
+        run: |
+          FIT_BUILD_VERSION="${GITHUB_REF_NAME#v}" \
+            pyinstaller packaging/pyinstaller/macos/fit-web.spec --noconfirm --clean
+
+      - name: Build DMG
+        run: |
+          VERSION="${GITHUB_REF_NAME#v}"
+          ./packaging/scripts/build_macos_dmg.sh "dist/FitWeb.app" "${VERSION}" "dist/dmg"
+
+      - name: Upload DMG artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: fit-web-macos-dmg-${{ github.ref_name }}
+          path: dist/dmg/*.dmg
+          if-no-files-found: error
+
+      - name: Publish GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ github.ref_name }}
+          files: dist/dmg/*.dmg
+          generate_release_notes: true
