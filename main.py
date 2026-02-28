@@ -25,6 +25,7 @@ from fit_common.core import (
     get_platform,
     is_admin,
     is_bundled,
+    open_macos_privacy_settings,
     resolve_path,
     set_debug_level,
     set_gui_crash_handler,
@@ -38,43 +39,85 @@ from fit_web.lang import load_translations
 from fit_web.mitmproxy.runner import MitmproxyRunner
 from fit_web.web import Web
 
+_FFMPEG_HELP_KEYS = {
+    "macos": "BOOSTSTRAP_FFMPEG_PATH_NOT_FOUND_HELP_MACOS",
+    "win": "BOOSTSTRAP_FFMPEG_PATH_NOT_FOUND_HELP_WINDOWS",
+    "lin": "BOOSTSTRAP_FFMPEG_PATH_NOT_FOUND_HELP_LINUX",
+}
+
 
 def _log_bootstrap_result(result: BootstrapResult) -> None:
-
     __translations = bootstrap_load_translations()
     title = __translations.get("BOOSTSTRAP_ERROR_DIALOG_TITLE")
     if result.signal == BootstrapSignal.OK:
-        debug("✅ Bootstrap completed", context="main.fit_web")
+        debug("✅ Bootstrap completed", context="main.fit_bootstrap")
     elif result.signal == BootstrapSignal.ADMIN_DENIED:
-        debug("❌ Admin permissions denied", context="main.fit_web")
+        debug("❌ Admin permissions denied", context="main.fit_bootstrap")
         admin_type = "administrator" if get_platform() == "win" else "root"
-        message = __translations.get("BOOSTSTRAP_ADMIN_DENIED_MESSAGE").format(
+        message = __translations.get("BOOSTSTRAP_ADMIN_DENIED_MESSAGE", "").format(
             admin_type, admin_type
         )
         show_dialog("error", title, message, "")
     elif result.signal == BootstrapSignal.CERTIFICATE_NOT_INSTALLED:
-        debug("❌ Certificate installation failed", context="main.fit_web")
+        debug("❌ Certificate installation failed", context="main.fit_bootstrap")
         show_dialog(
             "error",
             title,
-            __translations.get("BOOSTSTRAP_CERTIFICATE_NOT_INSTALLED_MESSAGE"),
+            __translations.get("BOOSTSTRAP_CERTIFICATE_NOT_INSTALLED_MESSAGE", ""),
         )
+    elif result.signal == BootstrapSignal.FFMPEG_PATH_NOT_FOUND:
+        debug("❌ ffmpeg path not found", context="main.fit_bootstrap")
+        base_message = __translations.get(
+            "BOOSTSTRAP_FFMPEG_PATH_NOT_FOUND_MESSAGE",
+            "",
+        )
+        platform_key = get_platform()
+        help_key = _FFMPEG_HELP_KEYS.get(platform_key)
+        help_text = __translations.get(help_key, "") if help_key is not None else ""
+        if base_message and "{}" in base_message:
+            dialog_message = base_message.format(help_text)
+        else:
+            dialog_message = base_message
+            if help_text:
+                dialog_message = f"{dialog_message}<br><br>{help_text}"
+        show_dialog("warning", title, dialog_message)
     elif result.signal == BootstrapSignal.UNSUPPORTED_OS:
         debug(
-            f"❌ Unsupported operating system: {result.message}", context="main.fit_web"
+            f"❌ Unsupported operating system: {result.message}",
+            context="main.fit_bootstrap",
         )
         show_dialog(
             "error",
             title,
-            __translations.get("BOOSTSTRAP_UNSUPPORTED_OS_MESSAGE"),
+            __translations.get("BOOSTSTRAP_UNSUPPORTED_OS_MESSAGE", ""),
         )
+    elif result.signal == BootstrapSignal.FFMPEG_SCREEN_RECORDING_PERMISSIONS_DENIED:
+        debug("❌ Screen recording permissions denied", context="main.fit_bootstrap")
+        show_dialog(
+            "error",
+            title,
+            __translations.get(
+                "BOOSTSTRAP_FFMPEG_SCREEN_RECORDING_PERMISSIONS_DENIED_MESSAGE", ""
+            ),
+        )
+        open_macos_privacy_settings()
+    elif result.signal == BootstrapSignal.FFMPEG_SCREEN_RECORDING_TEST_FAILED:
+        debug("❌ Screen recording test failed", context="main.fit_bootstrap")
+        show_dialog(
+            "error",
+            title,
+            __translations.get(
+                "BOOSTSTRAP_FFMPEG_SCREEN_RECORDING_TEST_FAILED_MESSAGE", ""
+            ),
+        )
+        open_macos_privacy_settings()
     else:
-        debug(f"❌ Bootstrap error: {result.message}", context="main.fit_web")
+        debug(f"❌ Bootstrap error: {result.message}", context="main.fit_bootstrap")
         show_dialog(
             "error",
             title,
-            __translations.get("BOOSTSTRAP_UNKNOW_ERROR_MSG"),
-            result.message,
+            __translations.get("BOOSTSTRAP_UNKNOW_ERROR_MSG", "")
+            + f"<br><br>{result.message}",
         )
 
 
@@ -164,6 +207,7 @@ def _run_gui() -> int:
 
 
 def main() -> int:
+
     if os.environ.get("FIT_MITM_LAUNCH") == "1":
         from mitmproxy.tools.main import mitmdump
 
@@ -182,7 +226,7 @@ def main() -> int:
             "verbose": DebugLevel.VERBOSE,
         }[args.debug]
     )
-
+    debug(f"Freeze directory: {resolve_path("")}", context="main.fit_web")
     debug(f"argv: {sys.argv}", context="main.fit_web")
     debug(f"bundled: {is_bundled()}", context="main.fit_web")
 

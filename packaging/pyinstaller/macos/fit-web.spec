@@ -16,6 +16,12 @@ version_file_path.write_text(f'__version__ = "{version_value}"\n', encoding="utf
 
 datas = [(str(REPO_ROOT / "icon.ico"), ".")]
 datas += collect_data_files("fit_web", includes=["lang/*.json", "ui/**/*"])
+datas.append(
+    (
+        str(REPO_ROOT / "fit_web" / "mitmproxy" / "addons" / "fit_capture.py"),
+        "fit_web/mitmproxy/addons",
+    )
+)
 datas += collect_data_files("fit_assets")
 datas += collect_data_files("fit_common", includes=["lang/*.json"])
 datas += collect_data_files("fit_cases", includes=["lang/*.json"])
@@ -26,15 +32,19 @@ datas += collect_data_files("fit_bootstrap", includes=["lang/*.json"])
 datas += collect_data_files("fit_verify_pdf_timestamp", includes=["lang/*.json"])
 datas += collect_data_files("fit_verify_pec", includes=["lang/*.json"])
 datas += collect_data_files("fit_bootstrap", includes=["macos/askpass.sh"])
+datas += collect_data_files("fit_bootstrap", includes=["ffmpeg_binaries/macos_arm64/ffmpeg"])
+datas += collect_data_files("whois", includes=["data/public_suffix_list.dat"])
 datas.append((str(version_file_path), "."))
 
 hiddenimports = []
 hiddenimports += collect_submodules("fit_configurations.view.tabs")
 hiddenimports += collect_submodules("fit_acquisition.tasks")
+hiddenimports += collect_submodules("fit_web.tasks")
 hiddenimports += collect_submodules("xhtml2pdf")
 hiddenimports += collect_submodules("fit_bootstrap")
 hiddenimports += collect_submodules("fit_verify_pec")
 hiddenimports += collect_submodules("fit_verify_pdf_timestamp")
+hiddenimports += collect_submodules("wacz")
 hiddenimports += [
     "fit_web.mitmproxy.addons.fit_capture",
     "fit_webview_bridge",

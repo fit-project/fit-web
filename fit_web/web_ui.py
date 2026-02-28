@@ -295,7 +295,7 @@ class Ui_fit_web(object):
         self.verify_timestamp_button.setStyleSheet("QToolTip {font:13px;}")
         icon = QIcon()
         icon.addFile(
-            ":/images/wizard/images/wizard/verify_timestamp-disabled.png",
+            ":/images/wizard/images/wizard/verify_timestamp.png",
             QSize(),
             QIcon.Mode.Normal,
             QIcon.State.Off,
@@ -312,7 +312,7 @@ class Ui_fit_web(object):
         self.verify_pec_button.setStyleSheet("QToolTip {font:13px;}")
         icon1 = QIcon()
         icon1.addFile(
-            ":/images/wizard/images/wizard/verify_pec-disabled.png",
+            ":/images/wizard/images/wizard/verify_pec.png",
             QSize(),
             QIcon.Mode.Normal,
             QIcon.State.Off,
@@ -330,13 +330,7 @@ class Ui_fit_web(object):
         self.case_button.setStyleSheet("QToolTip {font:13px;}")
         icon2 = QIcon()
         icon2.addFile(
-            ":/icons/icons/icon_case.png", QSize(), QIcon.Mode.Normal, QIcon.State.On
-        )
-        icon2.addFile(
-            ":/icons/icons/icon_case-disabled.png",
-            QSize(),
-            QIcon.Mode.Disabled,
-            QIcon.State.On,
+            ":/icons/icons/icon_case.png", QSize(), QIcon.Mode.Normal, QIcon.State.Off
         )
         self.case_button.setIcon(icon2)
         self.case_button.setIconSize(QSize(20, 20))

@@ -13,10 +13,10 @@ python = ">=3.12,<3.14"
 PySide6 = "6.9.0"
 
 
-fit-bootstrap = {git = "https://github.com/fit-project/fit-bootstrap.git", tag = "v1.0.0-rc1"}
-fit-scraper = {git = "https://github.com/fit-project/fit-scraper.git", tag = "v1.0.0-rc1"}
-fit_verify_pdf_timestamp = {git = "https://github.com/fit-project/fit-verify-pdf-timestamp.git", tag = "v1.0.0-rc1"}
-fit_verify_pec = {git = "https://github.com/fit-project/fit-verify-pec.git", tag = "v1.0.0-rc1"}
+fit-bootstrap = {git = "https://github.com/fit-project/fit-bootstrap.git", branch = "feat/ffmpeg-check-and-screen-permission"}
+fit-scraper = {git = "https://github.com/fit-project/fit-scraper.git", branch = "main"}
+fit_verify_pdf_timestamp = {git = "https://github.com/fit-project/fit-verify-pdf-timestamp.git", branch = "main"}
+fit_verify_pec = {git = "https://github.com/fit-project/fit-verify-pec.git", branch = "main"}
 
 
 har2warc = "^1.0.4"

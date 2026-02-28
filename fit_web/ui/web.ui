@@ -473,7 +473,7 @@ QScrollBar::add-page:horizontal, QScrollBar::sub-page:horizontal{
                   </property>
                   <property name="icon">
                    <iconset resource="resources.qrc">
-                    <normaloff>:/images/wizard/images/wizard/verify_timestamp-disabled.png</normaloff>:/images/wizard/images/wizard/verify_timestamp-disabled.png</iconset>
+                    <normaloff>:/images/wizard/images/wizard/verify_timestamp.png</normaloff>:/images/wizard/images/wizard/verify_timestamp.png</iconset>
                   </property>
                   <property name="iconSize">
                    <size>
@@ -508,7 +508,7 @@ QScrollBar::add-page:horizontal, QScrollBar::sub-page:horizontal{
                   </property>
                   <property name="icon">
                    <iconset resource="resources.qrc">
-                    <normaloff>:/images/wizard/images/wizard/verify_pec-disabled.png</normaloff>:/images/wizard/images/wizard/verify_pec-disabled.png</iconset>
+                    <normaloff>:/images/wizard/images/wizard/verify_pec.png</normaloff>:/images/wizard/images/wizard/verify_pec.png</iconset>
                   </property>
                   <property name="iconSize">
                    <size>
@@ -545,10 +545,8 @@ QScrollBar::add-page:horizontal, QScrollBar::sub-page:horizontal{
                    <string/>
                   </property>
                   <property name="icon">
-                   <iconset>
-                    <normalon>:/icons/icons/icon_case.png</normalon>
-                    <disabledon>:/icons/icons/icon_case-disabled.png</disabledon>
-                   </iconset>
+                   <iconset resource="resources.qrc">
+                    <normaloff>:/icons/icons/icon_case.png</normaloff>:/icons/icons/icon_case.png</iconset>
                   </property>
                   <property name="iconSize">
                    <size>
