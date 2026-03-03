@@ -25,55 +25,13 @@ def test_parse_args_accepts_debug_verbose(monkeypatch: pytest.MonkeyPatch) -> No
 
 
 @pytest.mark.unit
-def test_mac_ok_non_macos(monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.setattr(main_module, "get_platform", lambda: "linux")
-    assert main_module._mac_ok() is True
-
-
-@pytest.mark.unit
-def test_mac_ok_checks_minimum_version(monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.setattr(main_module, "get_platform", lambda: "macos")
-    monkeypatch.setattr(main_module.platform, "mac_ver", lambda: ("11.2", ("", "", ""), ""))
-    assert main_module._mac_ok() is False
-    monkeypatch.setattr(main_module.platform, "mac_ver", lambda: ("11.3", ("", "", ""), ""))
-    assert main_module._mac_ok() is True
-
-
-@pytest.mark.unit
-def test_ensure_macos_or_exit_shows_dialog(monkeypatch: pytest.MonkeyPatch) -> None:
-    called: dict[str, str] = {}
-    monkeypatch.setattr(main_module, "get_platform", lambda: "linux")
-    monkeypatch.setattr(
-        main_module,
-        "load_translations",
-        lambda: {
-            "UNSUPPORTED_OS_DIALOG_TITLE": "title",
-            "UNSUPPORTED_OS_DIALOG_MESSAGE": "message",
-        },
-    )
-    monkeypatch.setattr(
-        main_module,
-        "show_dialog",
-        lambda _kind, title, message, _details: called.update(
-            {"title": title, "message": message}
-        ),
-    )
-    with pytest.raises(SystemExit):
-        main_module._ensure_macos_or_exit()
-    assert called["title"] == "title"
-    assert called["message"] == "message"
-
-
-@pytest.mark.unit
-def test_log_bootstrap_result_admin_denied(monkeypatch: pytest.MonkeyPatch) -> None:
+def test_log_bootstrap_result_error(monkeypatch: pytest.MonkeyPatch) -> None:
     captured: dict[str, str] = {}
-    monkeypatch.setattr(main_module, "get_platform", lambda: "macos")
     monkeypatch.setattr(
         main_module,
         "bootstrap_load_translations",
         lambda: {
             "BOOSTSTRAP_ERROR_DIALOG_TITLE": "Bootstrap Error",
-            "BOOSTSTRAP_ADMIN_DENIED_MESSAGE": "Need {} privileges. Relaunch as {}.",
         },
     )
     monkeypatch.setattr(
@@ -83,15 +41,16 @@ def test_log_bootstrap_result_admin_denied(monkeypatch: pytest.MonkeyPatch) -> N
             {"title": title, "message": message}
         ),
     )
-    result = BootstrapResult(signal=BootstrapSignal.ADMIN_DENIED, code=1, message="")
+    result = BootstrapResult(signal=BootstrapSignal.ERROR, code=1, message="boom")
     main_module._log_bootstrap_result(result)
     assert captured["title"] == "Bootstrap Error"
-    assert "root" in captured["message"]
+    assert captured["message"] == "boom"
 
 
 @pytest.mark.unit
 def test_main_mitm_launch_mode(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setenv("FIT_MITM_LAUNCH", "1")
+    monkeypatch.setattr(main_module, "restore_persisted_proxy_state", lambda: True)
     fake_main = types.SimpleNamespace(mitmdump=lambda: 42)
     monkeypatch.setitem(main_module.sys.modules, "mitmproxy.tools.main", fake_main)
     assert main_module.main() == 42
@@ -99,9 +58,34 @@ def test_main_mitm_launch_mode(monkeypatch: pytest.MonkeyPatch) -> None:
 
 
 @pytest.mark.unit
+def test_main_proxy_restore_watchdog_mode(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("FIT_PROXY_RESTORE_WATCHDOG", "1")
+    monkeypatch.setenv("FIT_PROXY_RESTORE_PARENT_PID", "321")
+    monkeypatch.setattr(main_module, "run_proxy_restore_watchdog", lambda pid: pid + 1)
+    assert main_module.main() == 322
+    monkeypatch.delenv("FIT_PROXY_RESTORE_WATCHDOG", raising=False)
+    monkeypatch.delenv("FIT_PROXY_RESTORE_PARENT_PID", raising=False)
+
+
+@pytest.mark.unit
+def test_main_askpass_mode(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.delenv("FIT_MITM_LAUNCH", raising=False)
+    monkeypatch.setattr(main_module, "get_platform", lambda: "macos")
+    monkeypatch.setenv("FIT_ASKPASS_DIALOG", "1")
+    monkeypatch.setitem(
+        main_module.sys.modules,
+        "fit_bootstrap.macos.askpass_dialog",
+        types.SimpleNamespace(main=lambda: 7),
+    )
+    assert main_module.main() == 7
+    monkeypatch.delenv("FIT_ASKPASS_DIALOG", raising=False)
+
+
+@pytest.mark.unit
 def test_main_gui_stage_requires_admin(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.delenv("FIT_MITM_LAUNCH", raising=False)
     monkeypatch.setenv(main_module.STAGE_ENV, main_module.STAGE_GUI)
+    monkeypatch.setattr(main_module, "restore_persisted_proxy_state", lambda: True)
     monkeypatch.setattr(main_module, "parse_args", lambda: types.SimpleNamespace(debug="none"))
     monkeypatch.setattr(main_module, "is_admin", lambda: False)
     assert main_module.main() == 1
@@ -111,6 +95,7 @@ def test_main_gui_stage_requires_admin(monkeypatch: pytest.MonkeyPatch) -> None:
 def test_main_gui_stage_runs_gui_when_lock_acquired(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.delenv("FIT_MITM_LAUNCH", raising=False)
     monkeypatch.setenv(main_module.STAGE_ENV, main_module.STAGE_GUI)
+    monkeypatch.setattr(main_module, "restore_persisted_proxy_state", lambda: True)
     monkeypatch.setattr(main_module, "parse_args", lambda: types.SimpleNamespace(debug="none"))
     monkeypatch.setattr(main_module, "is_admin", lambda: True)
     monkeypatch.setattr(main_module, "acquire_app_lock", lambda: True)
@@ -128,7 +113,7 @@ def test_main_non_gui_stops_mitm_on_preflight_failure(
 
         def _dispatch(self, on_signal, argv, stage_env, stage_gui):
             return BootstrapResult(
-                signal=BootstrapSignal.UNSUPPORTED_OS, code=2, message="nope"
+                signal=BootstrapSignal.ERROR, code=2, message="nope"
             )
 
     class _MitmRunnerFake:
@@ -145,9 +130,44 @@ def test_main_non_gui_stops_mitm_on_preflight_failure(
     runner = _MitmRunnerFake()
     monkeypatch.delenv("FIT_MITM_LAUNCH", raising=False)
     monkeypatch.setenv(main_module.STAGE_ENV, "ENV_STAGE")
+    monkeypatch.setattr(main_module, "restore_persisted_proxy_state", lambda: True)
     monkeypatch.setattr(main_module, "parse_args", lambda: types.SimpleNamespace(debug="none"))
     monkeypatch.setattr(main_module, "Bootstrap", _BootstrapFake)
     monkeypatch.setattr(main_module, "MitmproxyRunner", lambda *_args, **_kwargs: runner)
     rc = main_module.main()
     assert rc == 2
     assert runner.stopped is True
+
+
+@pytest.mark.unit
+def test_main_non_gui_returns_one_when_mitm_start_fails(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    runner = types.SimpleNamespace(start=lambda: False)
+    monkeypatch.delenv("FIT_MITM_LAUNCH", raising=False)
+    monkeypatch.setenv(main_module.STAGE_ENV, "ENV_STAGE")
+    monkeypatch.setattr(main_module, "restore_persisted_proxy_state", lambda: True)
+    monkeypatch.setattr(
+        main_module, "parse_args", lambda: types.SimpleNamespace(debug="none")
+    )
+    monkeypatch.setattr(main_module, "MitmproxyRunner", lambda *_args, **_kwargs: runner)
+    assert main_module.main() == 1
+
+
+@pytest.mark.unit
+def test_show_crash_dialog_restores_persisted_proxy_state(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    calls: list[str] = []
+    monkeypatch.setattr(main_module, "restore_persisted_proxy_state", lambda: calls.append("restore") or True)
+    monkeypatch.setattr(
+        main_module,
+        "load_translations",
+        lambda: {
+            "APPLICATION_ERROR_DIALOG_TITLE": "title",
+            "APPLICATION_ERROR_DIALOG_MESSAGE": "message",
+        },
+    )
+    monkeypatch.setattr(main_module, "show_dialog", lambda *args, **kwargs: None)
+    main_module.show_crash_dialog("boom")
+    assert calls == ["restore"]

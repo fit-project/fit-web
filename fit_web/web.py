@@ -29,7 +29,13 @@ from PySide6 import QtCore, QtGui, QtWidgets
 
 from fit_web.lang import load_translations
 from fit_web.mitmproxy.runner import MitmproxyRunner
-from fit_web.os_proxy_setup import ProxyState, get_proxy_manager
+from fit_web.os_proxy_setup import (
+    ProxyState,
+    clear_persisted_proxy_state,
+    get_proxy_manager,
+    launch_proxy_restore_watchdog,
+    persist_proxy_state,
+)
 from fit_web.selected_area_screenshot import SelectAreaScreenshot
 from fit_web.tasks.full_page_screenshot import (
     TaskFullPageScreenShotWorker,
@@ -89,6 +95,7 @@ class Web(Scraper):
             self.__find_query = ""
             self.__find_total = 0
             self.__find_index = 0
+            self.__open_dialogs: set[QtWidgets.QDialog] = set()
             self.__init_ui()
             self.__enable_all()
             self.__add_new_tab(
@@ -634,7 +641,10 @@ class Web(Scraper):
         task = self.acquisition.tasks_manager.get_task("TaskFullPageScreenShot")
         debug("ℹ️ after start TaskFullPageScreenShot", context=get_context(self))
         if task:
-            task.finished.connect(self.execute_stop_tasks_flow)
+            task.finished.connect(
+                self.execute_stop_tasks_flow,
+                QtCore.Qt.ConnectionType.QueuedConnection,
+            )
             task.options = self.acquisition.options
             task.increment = self.acquisition.calculate_increment()
             task.start()
@@ -998,6 +1008,7 @@ class Web(Scraper):
             if not hasattr(self.proxy_manager, "restore"):
                 return False
             self.proxy_manager.restore(self.proxy_state)
+        clear_persisted_proxy_state()
         self.proxy_manager = None
         self.proxy_state = None
         return True
@@ -1043,6 +1054,8 @@ class Web(Scraper):
             )
             return False
         self.proxy_manager.enable_capture_proxy("127.0.0.1", port_value)
+        if persist_proxy_state(self.proxy_manager, self.proxy_state):
+            launch_proxy_restore_watchdog()
         debug("✅ Proxy enabled for capture", context=get_context(self))
         return True
 
@@ -1071,5 +1084,7 @@ class Web(Scraper):
 
     def closeEvent(self, event):
         if self.can_close() and self.wizard is None:
+            self.__stop_mitm_capture()
+            self.__restore_os_proxy()
             self.mitm_runner.stop_by_pid()
         return super().closeEvent(event)

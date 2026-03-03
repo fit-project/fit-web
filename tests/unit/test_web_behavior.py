@@ -225,22 +225,38 @@ def test_configure_os_proxy_success(monkeypatch: pytest.MonkeyPatch) -> None:
     web.proxy_manager = manager
     web.proxy_state = None
     monkeypatch.setenv("FIT_MITM_PORT", "9090")
+    persisted: list[tuple[object, object]] = []
+    monkeypatch.setattr(
+        web_module,
+        "persist_proxy_state",
+        lambda manager, state: persisted.append((manager, state)) or True,
+    )
     assert web._Web__configure_os_proxy() is True
     assert web.proxy_state is snapshot_state
     assert called == {"host": "127.0.0.1", "port": 9090}
+    assert persisted == [(manager, snapshot_state)]
 
 
 @pytest.mark.unit
-def test_restore_os_proxy_calls_restore_and_resets_state() -> None:
+def test_restore_os_proxy_calls_restore_and_resets_state(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     web = _build_web_stub()
     called: list[object] = []
     state = object()
     web.proxy_state = state
     web.proxy_manager = types.SimpleNamespace(restore=lambda s: called.append(s))
+    cleared: list[bool] = []
+    monkeypatch.setattr(
+        web_module,
+        "clear_persisted_proxy_state",
+        lambda: cleared.append(True) or True,
+    )
     assert web._Web__restore_os_proxy() is True
     assert called == [state]
     assert web.proxy_manager is None
     assert web.proxy_state is None
+    assert cleared == [True]
 
 
 @pytest.mark.unit

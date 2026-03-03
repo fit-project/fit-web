@@ -32,7 +32,7 @@ datas += collect_data_files("fit_bootstrap", includes=["lang/*.json"])
 datas += collect_data_files("fit_verify_pdf_timestamp", includes=["lang/*.json"])
 datas += collect_data_files("fit_verify_pec", includes=["lang/*.json"])
 datas += collect_data_files("fit_bootstrap", includes=["macos/askpass.sh"])
-datas += collect_data_files("fit_bootstrap", includes=["ffmpeg_binaries/macos_arm64/ffmpeg"])
+datas += collect_data_files("fit_bootstrap", includes=["fit_screen_recorder_binaries/macos_arm64/fit-screen-recoder"])
 datas += collect_data_files("whois", includes=["data/public_suffix_list.dat"])
 datas.append((str(version_file_path), "."))
 
