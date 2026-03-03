@@ -1054,7 +1054,7 @@ xhtml2pdf = "^0.2.17"
 type = "git"
 url = "https://github.com/fit-project/fit-acquisition.git"
 reference = "main"
-resolved_reference = "245e746f78c0a86afc64e4610ca994debd7ffcd8"
+resolved_reference = "8dc86f90e28d227467d59a4b1048d527b573086c"
 
 [[package]]
 name = "fit-assets"
@@ -1093,7 +1093,7 @@ fit-common = {git = "https://github.com/fit-project/fit-common.git", branch = "m
 type = "git"
 url = "https://github.com/fit-project/fit-bootstrap.git"
 reference = "main"
-resolved_reference = "80758ecd142227c836d88bbe43bf44add6322b4b"
+resolved_reference = "bb4f6dc6ebb00ea847462df082bd025b9d4deb12"
 
 [[package]]
 name = "fit-cases"
@@ -1115,7 +1115,7 @@ sqlalchemy = "^2.0.40"
 type = "git"
 url = "https://github.com/fit-project/fit-cases.git"
 reference = "main"
-resolved_reference = "38d17907b37ba183fc8e18560c4ae8d3148bbec8"
+resolved_reference = "db110a042d9e7a13b788778333b9bcbfdca5351f"
 
 [[package]]
 name = "fit-common"
@@ -1143,7 +1143,7 @@ xhtml2pdf = "^0.2.17"
 type = "git"
 url = "https://github.com/fit-project/fit-common.git"
 reference = "main"
-resolved_reference = "020afdd35950b0532c322eae5f78df8257c469a2"
+resolved_reference = "fa07e7197961d349e0c5162b290e7402d0b55868"
 
 [[package]]
 name = "fit-configurations"
@@ -1165,7 +1165,7 @@ sqlalchemy = "^2.0.40"
 type = "git"
 url = "https://github.com/fit-project/fit-configurations.git"
 reference = "main"
-resolved_reference = "914202df91c972f9879a06728eba31675543aef3"
+resolved_reference = "9bac3a4595ac9f41c022efd7e64b3d2a2ea67b90"
 
 [[package]]
 name = "fit-scraper"
@@ -1185,7 +1185,7 @@ PySide6 = "6.9.0"
 type = "git"
 url = "https://github.com/fit-project/fit-scraper.git"
 reference = "main"
-resolved_reference = "cb2b10a5963277f0373b777f22937a50ffe3af99"
+resolved_reference = "7609447ac5c3a4e0d6924956f3fbc7415064c844"
 
 [[package]]
 name = "fit-verify-pdf-timestamp"

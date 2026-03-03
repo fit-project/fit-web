@@ -96,6 +96,7 @@ class Web(Scraper):
             self.__find_total = 0
             self.__find_index = 0
             self.__open_dialogs: set[QtWidgets.QDialog] = set()
+            self.__move_window_locked = False
             self.__init_ui()
             self.__enable_all()
             self.__add_new_tab(
@@ -488,6 +489,9 @@ class Web(Scraper):
         self.dragPos = event.globalPosition().toPoint()
 
     def move_window(self, event):
+        if self.__move_window_locked:
+            event.ignore()
+            return
         if event.buttons() == QtCore.Qt.MouseButton.LeftButton:
             self.move(self.pos() + event.globalPosition().toPoint() - self.dragPos)
             self.dragPos = event.globalPosition().toPoint()
@@ -495,6 +499,7 @@ class Web(Scraper):
 
     # START GLOBAL ACQUISITON METHODS
     def __execute_start_tasks_flow(self):
+        self.__move_window_locked = True
         self.setEnabled(False)
         loop = QtCore.QEventLoop()
         QtCore.QTimer.singleShot(400, loop.quit)
@@ -530,6 +535,7 @@ class Web(Scraper):
                             "",
                         )
                         error_dlg.exec()
+                        self.__move_window_locked = False
                         self.setEnabled(True)
                         return
 
@@ -543,6 +549,7 @@ class Web(Scraper):
                             "",
                         )
                         error_dlg.exec()
+                        self.__move_window_locked = False
                         self.setEnabled(True)
                         return
 
@@ -579,17 +586,20 @@ class Web(Scraper):
                         "❌ Failed to create downloads directory",
                         context=get_context(self),
                     )
+                    self.__move_window_locked = False
                     self.setEnabled(True)
             else:
                 debug(
                     "❌ Failed to create screenshot directory",
                     context=get_context(self),
                 )
+                self.__move_window_locked = False
                 self.setEnabled(True)
         else:
             debug(
                 "❌ Failed to create acquisition directory", context=get_context(self)
             )
+            self.__move_window_locked = False
             self.setEnabled(True)
 
     def __show_http_https_disclaimer(self) -> None:
@@ -684,6 +694,7 @@ class Web(Scraper):
 
         super().on_post_acquisition_finished()
         self.__restore_default_download_directory()
+        self.__move_window_locked = False
 
         self.__enable_all()
 
