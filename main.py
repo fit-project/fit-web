@@ -15,6 +15,7 @@ import sys
 
 from fit_bootstrap.app_lock import acquire_app_lock, release_app_lock
 from fit_bootstrap.bootstrap import Bootstrap
+from fit_bootstrap.caller import CallerProfile
 from fit_bootstrap.constants import STAGE_ENV, STAGE_GUI
 from fit_bootstrap.lang import load_translations as bootstrap_load_translations
 from fit_bootstrap.signals import BootstrapResult, BootstrapSignal
@@ -120,6 +121,11 @@ def main() -> int:
 
         return askpass_main()
 
+    if os.environ.get("FIT_UPDATE_DIALOG") == "1":
+        from fit_bootstrap.updater import main as updater_main
+
+        return updater_main()
+
     restore_persisted_proxy_state()
 
     args = parse_args()
@@ -145,7 +151,9 @@ def main() -> int:
         atexit.register(release_app_lock)
         return _run_gui()
 
-    bootstrap = Bootstrap(debug_enabled=args.debug != "none")
+    bootstrap = Bootstrap(
+        debug_enabled=args.debug != "none", caller=CallerProfile.FIT_BOOTSTRAP
+    )
 
     mitm_runner = MitmproxyRunner()
     if not mitm_runner.start():

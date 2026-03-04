@@ -9,6 +9,7 @@
 
 
 import os
+import json
 import shutil
 import sys
 import tempfile
@@ -74,10 +75,17 @@ class TaskSavePageWorker(TaskWorker):
             prefix="fit_wacz_", dir=self.acquisition_directory
         ) as temp_dir:
             debug(f"ℹ️ wacz temp_dir: {temp_dir}", context=get_context(self))
+            sanitized_har_path = os.path.join(temp_dir, "capture.sanitized.har")
+            sanitized_count = self._sanitize_har_for_warc(har_path, sanitized_har_path)
+            if sanitized_count:
+                debug(
+                    f"⚠️ Sanitized {sanitized_count} HAR string values before WARC conversion",
+                    context=get_context(self),
+                )
             warc_path = os.path.join(temp_dir, "data.warc.gz")
             debug("ℹ️ Converting HAR to WARC", context=get_context(self))
             har2warc(
-                har_path,
+                sanitized_har_path,
                 warc_path,
                 gzip=True,
                 filename=warc_path,
@@ -138,6 +146,50 @@ class TaskSavePageWorker(TaskWorker):
             return wacz_main.main(args)
         finally:
             wacz_main.WACZIndexer = original
+
+    @staticmethod
+    def _sanitize_har_for_warc(source_path: str, target_path: str) -> int:
+        with open(source_path, encoding="utf-8") as har_file:
+            har_data = json.load(har_file)
+
+        sanitized_data, replacements = TaskSavePageWorker._sanitize_har_value(har_data)
+
+        with open(target_path, "w", encoding="utf-8") as har_file:
+            json.dump(sanitized_data, har_file, ensure_ascii=False)
+
+        return replacements
+
+    @staticmethod
+    def _sanitize_har_value(value):
+        if isinstance(value, str):
+            sanitized = value.encode("utf-8", "surrogateescape").decode(
+                "utf-8", "replace"
+            )
+            return sanitized, int(sanitized != value)
+
+        if isinstance(value, list):
+            sanitized_list = []
+            replacements = 0
+            for item in value:
+                sanitized_item, item_replacements = TaskSavePageWorker._sanitize_har_value(
+                    item
+                )
+                sanitized_list.append(sanitized_item)
+                replacements += item_replacements
+            return sanitized_list, replacements
+
+        if isinstance(value, dict):
+            sanitized_dict = {}
+            replacements = 0
+            for key, item in value.items():
+                sanitized_item, item_replacements = TaskSavePageWorker._sanitize_har_value(
+                    item
+                )
+                sanitized_dict[key] = sanitized_item
+                replacements += item_replacements
+            return sanitized_dict, replacements
+
+        return value, 0
 
     @staticmethod
     def _ensure_pkg_resources_compat() -> None:

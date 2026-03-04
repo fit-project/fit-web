@@ -1077,7 +1077,7 @@ resolved_reference = "41c79f7cac046356867ed5198d053ac86d053c56"
 
 [[package]]
 name = "fit-bootstrap"
-version = "1.0.0rc1"
+version = "1.0.0"
 description = "FIT Bootstrap Module"
 optional = false
 python-versions = ">=3.12,<3.14"
@@ -1093,7 +1093,7 @@ fit-common = {git = "https://github.com/fit-project/fit-common.git", branch = "m
 type = "git"
 url = "https://github.com/fit-project/fit-bootstrap.git"
 reference = "main"
-resolved_reference = "bb4f6dc6ebb00ea847462df082bd025b9d4deb12"
+resolved_reference = "432bdc6d1595b05dd9bf73cc0b479269e7544ae4"
 
 [[package]]
 name = "fit-cases"
@@ -1143,7 +1143,7 @@ xhtml2pdf = "^0.2.17"
 type = "git"
 url = "https://github.com/fit-project/fit-common.git"
 reference = "main"
-resolved_reference = "fa07e7197961d349e0c5162b290e7402d0b55868"
+resolved_reference = "6c5b2411e7dfc3ef7e9e0e279f31b6223d0f8b54"
 
 [[package]]
 name = "fit-configurations"
@@ -1165,7 +1165,7 @@ sqlalchemy = "^2.0.40"
 type = "git"
 url = "https://github.com/fit-project/fit-configurations.git"
 reference = "main"
-resolved_reference = "9bac3a4595ac9f41c022efd7e64b3d2a2ea67b90"
+resolved_reference = "628c6d8d0db2f9f53b34f26b2793ab472367a4e3"
 
 [[package]]
 name = "fit-scraper"
@@ -1185,7 +1185,7 @@ PySide6 = "6.9.0"
 type = "git"
 url = "https://github.com/fit-project/fit-scraper.git"
 reference = "main"
-resolved_reference = "7609447ac5c3a4e0d6924956f3fbc7415064c844"
+resolved_reference = "5009890f968277578e76ba1f5012e737ff832a4d"
 
 [[package]]
 name = "fit-verify-pdf-timestamp"
@@ -4089,14 +4089,14 @@ dev = ["mypy (>=1.18.1)", "pre-commit (>=4.3.0)", "pytest (>=8.3.5)", "pytest-co
 
 [[package]]
 name = "tabulate"
-version = "0.9.0"
+version = "0.10.0"
 description = "Pretty-print tabular data"
 optional = false
-python-versions = ">=3.7"
+python-versions = ">=3.10"
 groups = ["main"]
 files = [
-    {file = "tabulate-0.9.0-py3-none-any.whl", hash = "sha256:024ca478df22e9340661486f85298cff5f6dcdba14f3813e8830015b9ed1948f"},
-    {file = "tabulate-0.9.0.tar.gz", hash = "sha256:0095b12bf5966de529c0feb1fa08671671b3368eec77d7ef7ab114be2c068b3c"},
+    {file = "tabulate-0.10.0-py3-none-any.whl", hash = "sha256:f0b0622e567335c8fabaaa659f1b33bcb6ddfe2e496071b743aa113f8774f2d3"},
+    {file = "tabulate-0.10.0.tar.gz", hash = "sha256:e2cfde8f79420f6deeffdeda9aaec3b6bc5abce947655d17ac662b126e48a60d"},
 ]
 
 [package.extras]
