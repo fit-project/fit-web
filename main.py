@@ -10,6 +10,7 @@
 import argparse
 import atexit
 import ctypes
+import inspect
 import os
 import sys
 
@@ -151,12 +152,11 @@ def main() -> int:
         atexit.register(release_app_lock)
         return _run_gui()
 
-    try:
-        bootstrap = Bootstrap(
-            debug_enabled=args.debug != "none", caller=CallerProfile.FIT_WEB
-        )
-    except TypeError:
-        bootstrap = Bootstrap(debug_enabled=args.debug != "none")
+    bootstrap_kwargs = {"debug_enabled": args.debug != "none"}
+    if "caller" in inspect.signature(Bootstrap).parameters:
+        bootstrap_kwargs["caller"] = CallerProfile.FIT_WEB
+
+    bootstrap = Bootstrap(**bootstrap_kwargs)
 
     mitm_runner = MitmproxyRunner()
     if not mitm_runner.start():

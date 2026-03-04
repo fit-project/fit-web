@@ -6,6 +6,7 @@ import types
 import pytest
 
 import main as main_module
+from fit_bootstrap.caller import CallerProfile
 from fit_bootstrap.signals import BootstrapResult, BootstrapSignal
 
 
@@ -137,6 +138,37 @@ def test_main_non_gui_stops_mitm_on_preflight_failure(
     rc = main_module.main()
     assert rc == 2
     assert runner.stopped is True
+
+
+@pytest.mark.unit
+def test_main_non_gui_passes_fit_web_caller_when_supported(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    class _BootstrapFake:
+        last_instance = None
+
+        def __init__(self, debug_enabled: bool, caller=None) -> None:
+            self.debug_enabled = debug_enabled
+            self.caller = caller
+            _BootstrapFake.last_instance = self
+
+        def _dispatch(self, on_signal, argv, stage_env, stage_gui):
+            return BootstrapResult(signal=BootstrapSignal.OK, code=0, message="")
+
+    runner = types.SimpleNamespace(start=lambda: True, stop_by_pid=lambda: True)
+    monkeypatch.delenv("FIT_MITM_LAUNCH", raising=False)
+    monkeypatch.setenv(main_module.STAGE_ENV, "ENV_STAGE")
+    monkeypatch.setattr(main_module, "restore_persisted_proxy_state", lambda: True)
+    monkeypatch.setattr(
+        main_module, "parse_args", lambda: types.SimpleNamespace(debug="none")
+    )
+    monkeypatch.setattr(main_module, "Bootstrap", _BootstrapFake)
+    monkeypatch.setattr(main_module, "MitmproxyRunner", lambda *_args, **_kwargs: runner)
+
+    rc = main_module.main()
+    assert rc == 0
+    assert _BootstrapFake.last_instance is not None
+    assert _BootstrapFake.last_instance.caller == CallerProfile.FIT_WEB
 
 
 @pytest.mark.unit
