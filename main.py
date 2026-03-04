@@ -151,9 +151,12 @@ def main() -> int:
         atexit.register(release_app_lock)
         return _run_gui()
 
-    bootstrap = Bootstrap(
-        debug_enabled=args.debug != "none", caller=CallerProfile.FIT_WEB
-    )
+    try:
+        bootstrap = Bootstrap(
+            debug_enabled=args.debug != "none", caller=CallerProfile.FIT_WEB
+        )
+    except TypeError:
+        bootstrap = Bootstrap(debug_enabled=args.debug != "none")
 
     mitm_runner = MitmproxyRunner()
     if not mitm_runner.start():

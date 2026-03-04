@@ -114,12 +114,14 @@ class FindBar(QtWidgets.QFrame):
         self.setGraphicsEffect(shadow)
 
     def __init_shortcuts(self, shortcut_owner: QtWidgets.QWidget) -> None:
-        self.__find_shortcut = QtGui.QShortcut(QtGui.QKeySequence.Find, shortcut_owner)
+        self.__find_shortcut = QtGui.QShortcut(
+            QtGui.QKeySequence(QtGui.QKeySequence.StandardKey.Find), shortcut_owner
+        )
         self.__find_shortcut.setContext(QtCore.Qt.ShortcutContext.ApplicationShortcut)
         self.__find_shortcut.activated.connect(self.show_bar)
 
         self.__find_next_shortcut = QtGui.QShortcut(
-            QtGui.QKeySequence.FindNext, shortcut_owner
+            QtGui.QKeySequence(QtGui.QKeySequence.StandardKey.FindNext), shortcut_owner
         )
         self.__find_next_shortcut.setContext(
             QtCore.Qt.ShortcutContext.ApplicationShortcut
@@ -127,7 +129,10 @@ class FindBar(QtWidgets.QFrame):
         self.__find_next_shortcut.activated.connect(self.find_next)
 
         self.__find_prev_shortcut = QtGui.QShortcut(
-            QtGui.QKeySequence.FindPrevious, shortcut_owner
+            QtGui.QKeySequence(
+                QtGui.QKeySequence.StandardKey.FindPrevious
+            ),
+            shortcut_owner,
         )
         self.__find_prev_shortcut.setContext(
             QtCore.Qt.ShortcutContext.ApplicationShortcut

@@ -182,6 +182,13 @@ class Web(Scraper):
 
         translate_ui(self.__translations, self)
 
+    @staticmethod
+    def __js_quote(value):
+        escaped = value.replace("\\", "\\\\")
+        escaped = escaped.replace("'", "\\'")
+        escaped = escaped.replace("\n", "\\n").replace("\r", "\\r")
+        return escaped
+
     def mousePressEvent(self, event):
         self.dragPos = event.globalPosition().toPoint()
 
