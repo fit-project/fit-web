@@ -95,7 +95,7 @@ class Web(Scraper):
             self.__find_query = ""
             self.__find_total = 0
             self.__find_index = 0
-            self.__open_dialogs: set[QtWidgets.QDialog] = set()
+            self.__open_dialogs: set[QtWidgets.QWidget] = set()
             self.__move_window_locked = False
             self.__init_ui()
             self.__enable_all()
@@ -1086,12 +1086,18 @@ class Web(Scraper):
         return False
 
     def __verify_timestamp(self):
-        verify_timestamp = VerifyPDFTimestampView(self.wizard)
-        verify_timestamp.show()
+        self.__show_aux_window(VerifyPDFTimestampView(self.wizard))
 
     def __verify_pec(self):
-        verify_pec = VerifyPecView(self.wizard)
-        verify_pec.show()
+        self.__show_aux_window(VerifyPecView(self.wizard))
+
+    def __show_aux_window(self, window: QtWidgets.QWidget) -> None:
+        self.__open_dialogs.add(window)
+        window.setAttribute(QtCore.Qt.WidgetAttribute.WA_DeleteOnClose, True)
+        window.destroyed.connect(lambda *_args, w=window: self.__open_dialogs.discard(w))
+        window.show()
+        window.raise_()
+        window.activateWindow()
 
     def closeEvent(self, event):
         if self.can_close() and self.wizard is None:

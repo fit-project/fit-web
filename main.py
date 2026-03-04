@@ -152,7 +152,7 @@ def main() -> int:
         return _run_gui()
 
     bootstrap = Bootstrap(
-        debug_enabled=args.debug != "none", caller=CallerProfile.FIT_BOOTSTRAP
+        debug_enabled=args.debug != "none", caller=CallerProfile.FIT_WEB
     )
 
     mitm_runner = MitmproxyRunner()
