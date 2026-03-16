@@ -46,6 +46,56 @@ This checklist is used for:
 
 ## Common Functional Tests
 
+### MTP-000 - Startup without FIT network connectivity
+
+**Goal**
+- Verify that the app does not start without FIT network connectivity and exits after error acknowledgment.
+
+**Steps**
+1. Disconnect the workstation from the FIT network (or simulate FIT network unavailability).
+2. Launch the app from the standard installation path for the current OS.
+3. Wait for startup checks to complete.
+4. In the connectivity error popup, click **OK**.
+
+**Expected result**
+- The app does not proceed to normal startup flow.
+- An error popup is shown indicating FIT network connectivity is required.
+- After clicking **OK**, the app closes.
+
+### MTP-MAC-001 - Gatekeeper and quarantine removal on first launch
+
+**Goal**
+- Verify first-launch behavior when the app is quarantined and confirm unblocking flow.
+
+**Steps**
+1. Install `FitWeb.app` from `.dmg` on a clean macOS environment.
+2. Ensure app quarantine attribute is present (fresh download path / first launch).
+3. Launch `FitWeb.app` the first time.
+4. If blocked by Gatekeeper, perform the expected unblocking flow from macOS security settings.
+5. Re-launch the app.
+
+**Expected result**
+- On first launch, macOS may block the app due to Gatekeeper/quarantine.
+- After unblocking/removing quarantine, the app launches correctly.
+- Subsequent launches are not blocked again by the same Gatekeeper warning.
+
+### MTP-MAC-002 - Screen recording permission flow
+
+**Goal**
+- Verify that screen recording permission is requested and required behavior is clear to the user.
+
+**Steps**
+1. Start from clean macOS privacy permissions (screen recording not granted for `FitWeb.app`).
+2. Launch the app and trigger a workflow that requires screen recording access.
+3. Observe permission request and grant screen recording permission in System Settings if prompted.
+4. Re-launch the app if macOS requires restart of the app after permission grant.
+5. Repeat the same workflow.
+
+**Expected result**
+- The app clearly prompts for screen recording permission when needed.
+- Without permission, user receives a clear error/instruction and the feature cannot continue.
+- After granting permission (and relaunching if required), the feature works as expected.
+
 ### MTP-001 - MITMPROXY certificate installation flow
 
 **Goal**
@@ -134,17 +184,31 @@ This checklist is used for:
 - No missing-resource errors (for example missing `lang/*.json`).
 - No runtime crash when opening/closing dialogs.
 
+## macOS-Specific Functional Tests
+
+
+
 ## Execution Matrix
 
 Mark each common test as executed on each OS.
 
 | Test ID | macOS | Windows | Linux | Notes |
 | --- | --- | --- | --- | --- |
+| MTP-000 |  |  |  |  |
 | MTP-001 |  |  |  |  |
 | MTP-002 |  |  |  |  |
 | MTP-003 |  |  |  |  |
 | MTP-004 |  |  |  |  |
 | MTP-005 |  |  |  |  |
+
+## macOS-Specific Execution Matrix
+
+Mark each macOS-only test as executed.
+
+| Test ID | macOS | Notes |
+| --- | --- | --- |
+| MTP-MAC-001 |  |  |
+| MTP-MAC-002 |  |  |
 
 ## Test Execution Log
 

@@ -69,9 +69,8 @@ pyz = PYZ(a.pure)
 exe = EXE(
     pyz,
     a.scripts,
-    a.binaries,
-    a.datas,
     [],
+    exclude_binaries=True,
     name="fit-web",
     debug=False,
     bootloader_ignore_signals=False,
@@ -87,8 +86,17 @@ exe = EXE(
     entitlements_file=None,
     icon=[str(REPO_ROOT / "icon.ico")],
 )
-app = BUNDLE(
+coll = COLLECT(
     exe,
+    a.binaries,
+    a.datas,
+    strip=False,
+    upx=False,
+    upx_exclude=[],
+    name="fit-web",
+)
+app = BUNDLE(
+    coll,
     name="FitWeb.app",
     icon=str(REPO_ROOT / "packaging" / "icon.icns"),
     bundle_identifier="org.fit-project.fit.web",
