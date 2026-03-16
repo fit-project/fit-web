@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "fit-web"
-version = "1.0.0-rc1"
+version = "1.0.0.0-rc6"
 description = "FIT WEB Scraper Module"
 authors = ["FIT Project"]
 license = "LGPL-3.0-or-later"
