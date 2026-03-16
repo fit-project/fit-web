@@ -130,6 +130,23 @@ This checklist is used for:
 - Case 2 (invalid password): the initial root privileges popup is shown again.
 - Case 3 (valid password): `Select a valid case` prompt is shown.
 
+
+### MTP-003 - Update Release Version
+
+**Goal**
+- Verify that the update flow works correctly.
+
+**Steps**
+1. Create a “fake” new release version (for example, from installed version 1.0.0 to fake version 1.0.1).
+2. Launch the app from the standard installation path for the current OS.
+3. Verify that a popup appears informing the user that a new version is available, with two options:  **Continue** or **Update**
+4. First, choose **Continue**. Wait for the root privileges prompt, enter the password, select a case, and open FitWeb. Then close the app.
+5. Re-launch the app, choose **Update**, wait for the download to complete, then click **Ok**
+
+**Expected result**
+- Case 1 (**Continue**): once FitWeb is open, check the current release shown in the bottom-right corner.
+- Case 2 (**Update** + **Ok**): after installation is complete, wait for the root privileges prompt, enter the password, select a case, and open FitWeb. Check that the release in the bottom-right corner has changed.
+
 ### MTP-003 - App startup and basic navigation
 
 **Goal**
