@@ -182,7 +182,7 @@ This checklist is used for:
 **Expected result**
 - Start/stop flow completes without blocking errors.
 - Acquisition folder is created under the selected case.
-- Expected the below baseline artifacts are present check each one if is correct:
+- Verify that the following baseline artifacts are present, and check that each one is correct:
     - acquisition_page.png
     - acquisition_page.wacz
     - acquisition_report.pdf
@@ -194,11 +194,34 @@ This checklist is used for:
     - headers.txt
     - nslookup.txt
     - screenshot.zip
+    - server.cer
     - system_info.txt
     - timestamp.tsr
     - traceroute.txt
     - tsa.crt
     - whois.txt
+
+### MTP-006 - Acquisition Add/modify all case information
+
+**Goal**
+- Verify that all case details are included in the PDF report.
+
+**Steps**
+1. Launch the app and fill in the case form dialog with all information, including the logo
+2. Open a target website.
+3. Click **Start acquisition**.
+4. Browse at least 2-3 pages on the same domain.
+5. Click **Stop acquisition**.
+6. Wait for post-acquisition tasks to complete.
+7. Open the generated acquisition folder.
+8. Open the report `acquisition_report.pdf` and verify information cases
+9. Open the case form dialog directly from the app (click the case icon in the top-right corner).
+10. Modify some information (for example, remove the logo).
+11. Repeat from step 2.
+
+**Expected result**
+- Case 1: All case information appears in the dedicated section of the report, and the company logo appears at the bottom center of each page.
+- Case 2: It is possible to update case information directly from the app.
 
 ### MTP-005 - Verify timestamp and PEC dialogs load correctly
 
