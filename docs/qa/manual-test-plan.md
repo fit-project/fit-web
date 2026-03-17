@@ -147,7 +147,7 @@ This checklist is used for:
 - Case 1 (**Continue**): once FitWeb is open, check the current release shown in the bottom-right corner.
 - Case 2 (**Update** + **Ok**): after installation is complete, wait for the root privileges prompt, enter the password, select a case, and open FitWeb. Check that the release in the bottom-right corner has changed.
 
-### MTP-003 - App startup and basic navigation
+### MTP-004 - App startup and basic navigation
 
 **Goal**
 - Verify that the app starts correctly and web navigation works after bootstrap.
@@ -166,7 +166,7 @@ This checklist is used for:
 - Acquisition warning popup is shown on home page load with network traffic capture warning.
 - Navigation buttons work as expected.
 
-### MTP-004 - Acquisition start/stop baseline flow
+### MTP-005 - Acquisition start/stop baseline flow
 
 **Goal**
 - Verify core acquisition flow and artifact generation.
@@ -182,7 +182,23 @@ This checklist is used for:
 **Expected result**
 - Start/stop flow completes without blocking errors.
 - Acquisition folder is created under the selected case.
-- Expected baseline artifacts are present (including web capture outputs).
+- Expected the below baseline artifacts are present check each one if is correct:
+    - acquisition_page.png
+    - acquisition_page.wacz
+    - acquisition_report.pdf
+    - acquisition_video.mp4
+    - acquisition.hash
+    - acquisition.log
+    - acquisition.pcap
+    - caseinfo.json
+    - headers.txt
+    - nslookup.txt
+    - screenshot.zip
+    - system_info.txt
+    - timestamp.tsr
+    - traceroute.txt
+    - tsa.crt
+    - whois.txt
 
 ### MTP-005 - Verify timestamp and PEC dialogs load correctly
 
