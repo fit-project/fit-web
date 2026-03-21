@@ -223,6 +223,25 @@ This checklist is used for:
 - Case 1: All case information appears in the dedicated section of the report, and the company logo appears at the bottom center of each page.
 - Case 2: It is possible to update case information directly from the app.
 
+
+### MTP-007 - Acquisition Add/modify all configuration parameters and test PEC flow
+
+**Goal**
+- Verify that all configuration options works correctly.
+
+**Steps**
+1. Launch the app and, in each tab, change some configuration options (for example, case directory, home URL, and disable network tools).
+2. Enable e set PEC information 
+2. Open a target website.
+3. Click **Start acquisition**.
+4. Browse at least 2-3 pages on the same domain.
+5. Click **Stop acquisition**.
+6. Wait for post-acquisition tasks to complete.
+7. Open the generated acquisition folder and check the artififact and report.
+
+**Expected result**
+Configuration options can be updated directly from the app.
+
 ### MTP-005 - Verify timestamp and PEC dialogs load correctly
 
 **Goal**
