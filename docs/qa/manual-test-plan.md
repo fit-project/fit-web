@@ -242,21 +242,26 @@ This checklist is used for:
 **Expected result**
 Configuration options can be updated directly from the app.
 
-### MTP-005 - Verify timestamp and PEC dialogs load correctly
+### MTP-008 - Verify timestamp and PEC work correctly
 
 **Goal**
-- Ensure bundled modules `fit-verify-pdf-timestamp` and `fit-verify-pec` load in the app.
+- Ensure that the bundled modules `fit-verify-pdf-timestamp` and `fit-verify-pec` work in the app.
 
 **Steps**
 1. Open fit-web.
 2. Click **Verify timestamp**.
-3. Close dialog.
-4. Click **Verify PEC**.
-5. Close dialog.
+3. Follow the instructions.
+4. At the end, open the report and check that all information is correct.
+5. Close the dialog.
+6. Click **Verify PEC**.
+7. Follow the instructions.
+8. At the end, open the report and check that all information is correct.
+9. Close the dialog.
 
 **Expected result**
 - Both dialogs open correctly.
 - No missing-resource errors (for example missing `lang/*.json`).
+- The report is generated.
 - No runtime crash when opening/closing dialogs.
 
 ## macOS-Specific Functional Tests
