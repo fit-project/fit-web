@@ -264,6 +264,31 @@ Configuration options can be updated directly from the app.
 - The report is generated.
 - No runtime crash when opening/closing dialogs.
 
+### MTP-009 - Social media login and post acquisition with audio, video, and comments
+
+**Goal**
+- Verify that FIT can acquire a social media post after login, including playable audio/video in the screen recording and visible comments in the archived page.
+
+**Steps**
+1. Launch the app and complete bootstrap requirements.
+2. Open a social media website that requires login (for example `https://www.facebook.com`).
+3. Log in with valid test credentials.
+4. Navigate to a public or test post that contains a video and visible comments.
+5. Click **Start acquisition**.
+6. Play the post video and verify that audio is audible during playback.
+7. Scroll or expand the comments area until the relevant comments are visible on the page.
+8. Click **Stop acquisition**.
+9. Wait for post-acquisition tasks to complete.
+10. Open the generated acquisition folder.
+11. Open `acquisition_video.mp4`.
+12. Open `acquisition_page.wacz` in a compatible WACZ viewer.
+
+**Expected result**
+- `acquisition_video.mp4` is generated and plays correctly.
+- In `acquisition_video.mp4`, the acquired post video is visible and its audio can be heard.
+- `acquisition_page.wacz` is generated and opens correctly.
+- In `acquisition_page.wacz`, the acquired social media page is visible and the post comments captured during acquisition are visible.
+
 ## macOS-Specific Functional Tests
 
 
@@ -280,6 +305,10 @@ Mark each common test as executed on each OS.
 | MTP-003 |  |  |  |  |
 | MTP-004 |  |  |  |  |
 | MTP-005 |  |  |  |  |
+| MTP-006 |  |  |  |  |
+| MTP-007 |  |  |  |  |
+| MTP-008 |  |  |  |  |
+| MTP-009 |  |  |  |  |
 
 ## macOS-Specific Execution Matrix
 

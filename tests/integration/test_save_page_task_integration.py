@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from pathlib import Path
+from typing import Any
 
 import pytest
 
@@ -32,6 +33,7 @@ def test_build_wacz_raises_when_har_missing(
 def test_build_wacz_happy_path(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
     worker = TaskSavePageWorker()
     worker.acquisition_directory = str(tmp_path)
+    worker.options = {"url": "https://example.com/page"}
     har_path = tmp_path / "capture.har"
     har_path.write_text("{}", encoding="utf-8")
     monkeypatch.setattr(worker, "_get_capture_har_path", lambda: str(har_path))
@@ -42,9 +44,15 @@ def test_build_wacz_happy_path(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) 
         Path(warc_path).write_text("warc", encoding="utf-8")
         created["warc"] = warc_path
 
-    def _fake_create_wacz(warc_path: str, wacz_path: str, disable_post_append: bool = False):
+    def _fake_create_wacz(
+        warc_path: str,
+        wacz_path: str,
+        disable_post_append: bool = False,
+        page_url: str | None = None,
+    ):
         Path(wacz_path).write_text("wacz", encoding="utf-8")
         created["wacz"] = wacz_path
+        created["page_url"] = page_url or ""
         return 0
 
     monkeypatch.setattr("fit_web.tasks.save_page.har2warc", _fake_har2warc)
@@ -55,3 +63,35 @@ def test_build_wacz_happy_path(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) 
     assert final_wacz.exists()
     assert final_wacz.read_text(encoding="utf-8") == "wacz"
     assert "warc" in created and "wacz" in created
+    assert created["page_url"] == "https://example.com/page"
+
+
+@pytest.mark.integration
+def test_create_wacz_passes_main_page_url(monkeypatch: pytest.MonkeyPatch) -> None:
+    worker = TaskSavePageWorker()
+    captured: dict[str, Any] = {}
+
+    def _fake_main(args):
+        captured["args"] = args
+        return 0
+
+    monkeypatch.setattr("wacz.main.main", _fake_main)
+
+    result = worker._create_wacz(
+        "data.warc.gz",
+        "out.wacz",
+        page_url="https://example.com/page",
+    )
+
+    assert result == 0
+    assert captured["args"] == [
+        "create",
+        "data.warc.gz",
+        "-o",
+        "out.wacz",
+        "--detect-pages",
+        "--text",
+        "--url",
+        "https://example.com/page",
+        "--split-seeds",
+    ]

@@ -71,6 +71,7 @@ class TaskSavePageWorker(TaskWorker):
         if not har_path or not os.path.exists(har_path):
             raise FileNotFoundError("capture.har not found")
         debug(f"ℹ️ capture.har: {har_path}", context=get_context(self))
+        page_url = self.options.get("url")
         with tempfile.TemporaryDirectory(
             prefix="fit_wacz_", dir=self.acquisition_directory
         ) as temp_dir:
@@ -96,7 +97,7 @@ class TaskSavePageWorker(TaskWorker):
             wacz_path = os.path.join(temp_dir, "acquisition_page.wacz")
             debug("ℹ️ Creating WACZ acquisition_page", context=get_context(self))
             try:
-                result = self._create_wacz(warc_path, wacz_path)
+                result = self._create_wacz(warc_path, wacz_path, page_url=page_url)
             except ParserError as e:
                 debug(
                     "⚠️ WACZ indexing failed parsing multipart; retrying without POST append",
@@ -104,7 +105,10 @@ class TaskSavePageWorker(TaskWorker):
                     context=get_context(self),
                 )
                 result = self._create_wacz(
-                    warc_path, wacz_path, disable_post_append=True
+                    warc_path,
+                    wacz_path,
+                    disable_post_append=True,
+                    page_url=page_url,
                 )
             if result not in (0, None):
                 raise RuntimeError(f"WACZ creation failed (code={result})")
@@ -117,7 +121,11 @@ class TaskSavePageWorker(TaskWorker):
             debug(f"✅ WACZ saved: {final_wacz}", context=get_context(self))
 
     def _create_wacz(
-        self, warc_path: str, wacz_path: str, disable_post_append: bool = False
+        self,
+        warc_path: str,
+        wacz_path: str,
+        disable_post_append: bool = False,
+        page_url: str | None = None,
     ) -> int | None:
         self._ensure_pkg_resources_compat()
         from wacz import main as wacz_main
@@ -130,6 +138,8 @@ class TaskSavePageWorker(TaskWorker):
             "--detect-pages",
             "--text",
         ]
+        if page_url:
+            args.extend(["--url", page_url, "--split-seeds"])
         if not disable_post_append:
             return wacz_main.main(args)
 

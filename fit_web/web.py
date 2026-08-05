@@ -14,7 +14,13 @@ import os
 from fit_acquisition.class_names import class_names
 from fit_acquisition.logger_names import LoggerName
 from fit_bootstrap.constants import FIT_MITM_PORT
-from fit_common.core import AcquisitionType, debug, get_context, get_version
+from fit_common.core import (
+    AcquisitionType,
+    debug,
+    get_context,
+    get_platform,
+    get_version,
+)
 from fit_common.gui.error import Error
 from fit_common.gui.ui_translation import translate_ui
 from fit_configurations.controller.tabs.general.general import GeneralController
@@ -83,7 +89,7 @@ class Web(Scraper):
             self.__default_download_directory = os.path.join(
                 os.path.expanduser("~"), "Downloads"
             )
-            atexit.register(self.__restore_os_proxy)
+            atexit.register(self.__restore_capture_proxy)
 
             self.__translations = load_translations()
             self.__find_bar: FindBar | None = None
@@ -230,8 +236,8 @@ class Web(Scraper):
                         "window_pos": self.pos(),
                     }
 
-                    debug("ℹ️ configuring OS proxy", context=get_context(self))
-                    if not self.__configure_os_proxy():
+                    debug("ℹ️ configuring capture proxy", context=get_context(self))
+                    if not self.__configure_capture_proxy():
                         error_dlg = Error(
                             QtWidgets.QMessageBox.Icon.Critical,
                             self.__translations["OS_PROXY_CONFIG_ERROR_TITLE"],
@@ -245,7 +251,7 @@ class Web(Scraper):
 
                     debug("ℹ️ starting mitm capture", context=get_context(self))
                     if not self.__start_mitm_capture():
-                        self.__restore_os_proxy()
+                        self.__restore_capture_proxy()
                         error_dlg = Error(
                             QtWidgets.QMessageBox.Icon.Critical,
                             self.__translations["MITM_PROXY_ERROR_TITLE"],
@@ -263,11 +269,11 @@ class Web(Scraper):
                     loop.exec()
 
                     current_widget = self.ui.tabs.currentWidget()
-                    if current_widget and hasattr(current_widget, "clearWebsiteData"):
+                    if current_widget and hasattr(current_widget, "clearCacheData"):
                         try:
-                            current_widget.clearWebsiteData()
+                            current_widget.clearCacheData()
                             debug(
-                                "ℹ️ cleared webview website data before capture reload",
+                                "ℹ️ cleared webview cache data before capture reload",
                                 context=get_context(self),
                             )
                             loop = QtCore.QEventLoop()
@@ -275,12 +281,12 @@ class Web(Scraper):
                             loop.exec()
                         except Exception as exc:
                             debug(
-                                f"❌ clearWebsiteData failed: {exc}",
+                                f"❌ clearCacheData failed: {exc}",
                                 context=get_context(self),
                             )
 
-                    # Reload here so mitm can attach to the page that initiates acquisition traffic.
-                    self.__reload()
+                    # Force a fresh navigation so mitm can attach to acquisition traffic.
+                    self.__force_capture_reload()
 
                     super().execute_start_tasks_flow()
 
@@ -331,10 +337,10 @@ class Web(Scraper):
                 context=get_context(self),
             )
 
-        debug("ℹ️ restore configuring OS proxy", context=get_context(self))
-        if not self.__restore_os_proxy():
+        debug("ℹ️ restoring post-acquisition proxy state", context=get_context(self))
+        if not self.__restore_post_acquisition_proxy():
             debug(
-                "❌ Unable to restore OS proxy cleanly",
+                "❌ Unable to restore post-acquisition proxy state cleanly",
                 context=get_context(self),
             )
 
@@ -496,6 +502,21 @@ class Web(Scraper):
     def __reload(self):
         self.ui.tabs.currentWidget().reload()
 
+    def __force_capture_reload(self):
+        current_widget = self.ui.tabs.currentWidget()
+        if current_widget and hasattr(current_widget, "url") and hasattr(
+            current_widget, "setUrl"
+        ):
+            current_url = current_widget.url()
+            if current_url and current_url.isValid():
+                debug(
+                    f"ℹ️ force capture reload via setUrl: {current_url.toString()}",
+                    context=get_context(self),
+                )
+                current_widget.setUrl(current_url)
+                return
+        self.__reload()
+
     def __navigate_home(self):
         self.ui.tabs.currentWidget().setUrl(
             QtCore.QUrl(GeneralController().configuration["home_page_url"])
@@ -542,6 +563,7 @@ class Web(Scraper):
         user_agent = GeneralController().configuration["user_agent"]
 
         web_view.setUserAgent(user_agent)
+        self.__configure_webview_proxy(web_view)
 
         if hasattr(web_view, "navigationDisplayUrlChanged"):
             web_view.navigationDisplayUrlChanged.connect(
@@ -728,8 +750,103 @@ class Web(Scraper):
         self.proxy_state = None
         return True
 
+    def __restore_capture_proxy(self) -> bool:
+        if self.__is_macos():
+            return self.__clear_webview_proxies()
+        return self.__restore_os_proxy()
+
+    def __restore_post_acquisition_proxy(self) -> bool:
+        if self.__is_macos():
+            debug(
+                "ℹ️ keeping WebView proxy configured after acquisition",
+                context=get_context(self),
+            )
+            return True
+        return self.__restore_os_proxy()
+
+    def __configure_capture_proxy(self) -> bool:
+        if self.__is_macos():
+            return self.__configure_webview_proxy(self.ui.tabs.currentWidget())
+        return self.__configure_os_proxy()
+
+    def __is_macos(self) -> bool:
+        return get_platform() == "macos"
+
+    def __mitm_port_value(self) -> int | None:
+        mitm_port = os.environ.get(FIT_MITM_PORT)
+        if not mitm_port:
+            debug(
+                f"❌ {FIT_MITM_PORT} env not set; skipping capture proxy",
+                context=get_context(self),
+            )
+            return None
+        try:
+            return int(mitm_port)
+        except ValueError:
+            debug(
+                f"❌ Invalid {FIT_MITM_PORT} value: {mitm_port}",
+                context=get_context(self),
+            )
+            return None
+
+    def __configure_webview_proxy(self, web_view) -> bool:
+        if not self.__is_macos():
+            return True
+        if web_view is None:
+            debug(
+                "❌ WebView not available for explicit proxy",
+                context=get_context(self),
+            )
+            return False
+        if not hasattr(web_view, "setProxy"):
+            debug(
+                "❌ WebView explicit proxy API not available",
+                context=get_context(self),
+            )
+            return False
+
+        port_value = self.__mitm_port_value()
+        if port_value is None:
+            return False
+
+        try:
+            result = web_view.setProxy("127.0.0.1", port_value)
+        except Exception as exc:
+            debug(f"❌ WebView setProxy failed: {exc}", context=get_context(self))
+            return False
+
+        if result is False:
+            debug("❌ WebView setProxy returned false", context=get_context(self))
+            return False
+        debug(
+            f"✅ WebView proxy enabled for capture: 127.0.0.1:{port_value}",
+            context=get_context(self),
+        )
+        return True
+
+    def __clear_webview_proxies(self) -> bool:
+        if not self.__is_macos():
+            return True
+        if not hasattr(self, "ui") or not hasattr(self.ui, "tabs"):
+            return True
+
+        ok = True
+        for index in range(self.ui.tabs.count()):
+            web_view = self.ui.tabs.widget(index)
+            if web_view is None or not hasattr(web_view, "clearProxy"):
+                continue
+            try:
+                web_view.clearProxy()
+            except Exception as exc:
+                ok = False
+                debug(f"❌ WebView clearProxy failed: {exc}", context=get_context(self))
+        return ok
+
     def __configure_os_proxy(self) -> bool:
         debug("ℹ️ __configure_os_proxy called", context=get_context(self))
+        if self.proxy_state is not None:
+            debug("ℹ️ OS proxy already configured", context=get_context(self))
+            return True
         if self.proxy_manager is None:
             self.proxy_manager = get_proxy_manager()
         if self.proxy_manager is None:
@@ -806,6 +923,6 @@ class Web(Scraper):
     def closeEvent(self, event):
         if self.can_close() and self.wizard is None:
             self.__stop_mitm_capture()
-            self.__restore_os_proxy()
+            self.__restore_capture_proxy()
             self.mitm_runner.stop_by_pid()
         return super().closeEvent(event)
