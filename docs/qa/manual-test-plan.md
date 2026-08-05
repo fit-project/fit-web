@@ -289,6 +289,28 @@ Configuration options can be updated directly from the app.
 - `acquisition_page.wacz` is generated and opens correctly.
 - In `acquisition_page.wacz`, the acquired social media page is visible and the post comments captured during acquisition are visible.
 
+### MTP-010 - Dual-screen acquisition and window movement lock
+
+**Goal**
+- Verify that, in a dual-screen setup, FIT records the screen on which its window is located and prevents the window from being moved to another screen after acquisition starts.
+
+**Steps**
+1. Connect and enable two screens.
+2. Launch FIT and complete bootstrap requirements.
+3. Move the FIT window to the screen that should be acquired.
+4. Click **Start acquisition**.
+5. Attempt to move the FIT window from the acquired screen to the other screen.
+6. Perform a few visible actions in FIT on the acquired screen.
+7. Click **Stop acquisition**.
+8. Wait for post-acquisition tasks to complete.
+9. Open the generated acquisition folder.
+10. Open `acquisition_video.mp4` and review the recording.
+
+**Expected result**
+- FIT records the screen on which its window was located when the acquisition started.
+- After the acquisition starts, the FIT window cannot be moved to the other screen.
+- `acquisition_video.mp4` shows the actions performed on the acquired screen.
+
 ## macOS-Specific Functional Tests
 
 
@@ -309,6 +331,7 @@ Mark each common test as executed on each OS.
 | MTP-007 |  |  |  |  |
 | MTP-008 |  |  |  |  |
 | MTP-009 |  |  |  |  |
+| MTP-010 |  |  |  |  |
 
 ## macOS-Specific Execution Matrix
 
