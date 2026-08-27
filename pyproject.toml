@@ -25,7 +25,12 @@ numpy = "^2.2.3"
 setuptools = ">=75,<81"
 mitmproxy = "^12.2.1"
 chardet = "<6"
-fit-webview-bridge = "1.0.0rc5"
+fit-webview-bridge = { version = "1.0.0rc7", source = "fit-project" }
+
+[[tool.poetry.source]]
+name = "fit-project"
+url = "https://fit-project.github.io/fit-python-index/simple/"
+priority = "supplemental"
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
