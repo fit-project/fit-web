@@ -751,12 +751,12 @@ class Web(Scraper):
         return True
 
     def __restore_capture_proxy(self) -> bool:
-        if self.__is_macos():
+        if self.__uses_explicit_webview_proxy():
             return self.__clear_webview_proxies()
         return self.__restore_os_proxy()
 
     def __restore_post_acquisition_proxy(self) -> bool:
-        if self.__is_macos():
+        if self.__uses_explicit_webview_proxy():
             debug(
                 "ℹ️ keeping WebView proxy configured after acquisition",
                 context=get_context(self),
@@ -765,12 +765,12 @@ class Web(Scraper):
         return self.__restore_os_proxy()
 
     def __configure_capture_proxy(self) -> bool:
-        if self.__is_macos():
+        if self.__uses_explicit_webview_proxy():
             return self.__configure_webview_proxy(self.ui.tabs.currentWidget())
         return self.__configure_os_proxy()
 
-    def __is_macos(self) -> bool:
-        return get_platform() == "macos"
+    def __uses_explicit_webview_proxy(self) -> bool:
+        return get_platform() in {"macos", "lin"}
 
     def __mitm_port_value(self) -> int | None:
         mitm_port = os.environ.get(FIT_MITM_PORT)
@@ -790,7 +790,7 @@ class Web(Scraper):
             return None
 
     def __configure_webview_proxy(self, web_view) -> bool:
-        if not self.__is_macos():
+        if not self.__uses_explicit_webview_proxy():
             return True
         if web_view is None:
             debug(
@@ -825,7 +825,7 @@ class Web(Scraper):
         return True
 
     def __clear_webview_proxies(self) -> bool:
-        if not self.__is_macos():
+        if not self.__uses_explicit_webview_proxy():
             return True
         if not hasattr(self, "ui") or not hasattr(self.ui, "tabs"):
             return True

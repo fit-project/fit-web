@@ -143,7 +143,7 @@ def main() -> int:
 
     if os.environ.get(STAGE_ENV) == STAGE_GUI:
         debug(f"GUI stage admin: {is_admin()}", context="main.fit_web")
-        if not is_admin():
+        if get_platform() != "lin" and not is_admin():
             debug("❌ GUI stage requires root privileges", context="main.fit_web")
             return 1
         if not acquire_app_lock():
@@ -158,6 +158,13 @@ def main() -> int:
 
     bootstrap = Bootstrap(**bootstrap_kwargs)
 
+    preflight_result = bootstrap.run_preflight_checks(
+        list(sys.argv), STAGE_ENV, STAGE_GUI
+    )
+    if preflight_result is not None:
+        _log_bootstrap_result(preflight_result)
+        return preflight_result.code
+
     mitm_runner = MitmproxyRunner()
     if not mitm_runner.start():
         debug("❌ mitmproxy start failed", context="main.fit_web")
@@ -168,6 +175,7 @@ def main() -> int:
         argv=list(sys.argv),
         stage_env=STAGE_ENV,
         stage_gui=STAGE_GUI,
+        preflight_completed=True,
     )
 
     if preflight_result.code != 0:
@@ -177,4 +185,4 @@ def main() -> int:
 
 
 if __name__ == "__main__":
-    main()
+    raise SystemExit(main())

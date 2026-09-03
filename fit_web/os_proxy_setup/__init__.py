@@ -216,7 +216,7 @@ def get_proxy_manager():
         from .win.proxy import WinProxyManager
 
         return WinProxyManager()
-    if platform == "linux":
+    if platform == "lin":
         from .lin.proxy import LinuxProxyManager
 
         return LinuxProxyManager()

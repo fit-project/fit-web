@@ -80,6 +80,9 @@ class _FakeTabs:
     def widget(self, index: int):
         return self.widgets[index]
 
+    def currentWidget(self):
+        return self.widgets[0] if self.widgets else None
+
     def setCurrentIndex(self, index: int) -> None:
         self.current_indexes.append(index)
 
@@ -265,6 +268,55 @@ def test_restore_os_proxy_fails_without_restore_method() -> None:
     web.proxy_state = object()
     web.proxy_manager = object()
     assert web._Web__restore_os_proxy() is False
+
+
+@pytest.mark.unit
+@pytest.mark.parametrize("platform", ["macos", "lin"])
+def test_configure_capture_proxy_uses_explicit_webview_proxy(
+    monkeypatch: pytest.MonkeyPatch, platform: str
+) -> None:
+    web = _build_web_stub()
+    proxy_calls: list[tuple[str, int]] = []
+    web_view = types.SimpleNamespace(
+        setProxy=lambda host, port: proxy_calls.append((host, port)) or True
+    )
+    web.ui.tabs = _FakeTabs([web_view])
+    monkeypatch.setattr(web_module, "get_platform", lambda: platform)
+    monkeypatch.setenv("FIT_MITM_PORT", "9090")
+
+    assert web._Web__configure_capture_proxy() is True
+    assert proxy_calls == [("127.0.0.1", 9090)]
+
+
+@pytest.mark.unit
+@pytest.mark.parametrize("platform", ["macos", "lin"])
+def test_restore_capture_proxy_clears_all_webview_proxies(
+    monkeypatch: pytest.MonkeyPatch, platform: str
+) -> None:
+    web = _build_web_stub()
+    cleared: list[str] = []
+    web.ui.tabs = _FakeTabs(
+        [
+            types.SimpleNamespace(clearProxy=lambda: cleared.append("first")),
+            types.SimpleNamespace(clearProxy=lambda: cleared.append("second")),
+        ]
+    )
+    monkeypatch.setattr(web_module, "get_platform", lambda: platform)
+
+    assert web._Web__restore_capture_proxy() is True
+    assert cleared == ["first", "second"]
+
+
+@pytest.mark.unit
+def test_configure_capture_proxy_keeps_os_proxy_for_other_platforms(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    web = _build_web_stub()
+    web.ui.tabs = _FakeTabs([object()])
+    monkeypatch.setattr(web_module, "get_platform", lambda: "win")
+    monkeypatch.setattr(web, "_Web__configure_os_proxy", lambda: True)
+
+    assert web._Web__configure_capture_proxy() is True
 
 
 @pytest.mark.unit

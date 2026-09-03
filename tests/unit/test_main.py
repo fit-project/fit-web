@@ -83,13 +83,31 @@ def test_main_askpass_mode(monkeypatch: pytest.MonkeyPatch) -> None:
 
 
 @pytest.mark.unit
-def test_main_gui_stage_requires_admin(monkeypatch: pytest.MonkeyPatch) -> None:
+def test_main_gui_stage_requires_admin_outside_linux(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     monkeypatch.delenv("FIT_MITM_LAUNCH", raising=False)
     monkeypatch.setenv(main_module.STAGE_ENV, main_module.STAGE_GUI)
     monkeypatch.setattr(main_module, "restore_persisted_proxy_state", lambda: True)
     monkeypatch.setattr(main_module, "parse_args", lambda: types.SimpleNamespace(debug="none"))
+    monkeypatch.setattr(main_module, "get_platform", lambda: "macos")
     monkeypatch.setattr(main_module, "is_admin", lambda: False)
     assert main_module.main() == 1
+
+
+@pytest.mark.unit
+def test_main_linux_gui_stage_runs_without_admin(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.delenv("FIT_MITM_LAUNCH", raising=False)
+    monkeypatch.setenv(main_module.STAGE_ENV, main_module.STAGE_GUI)
+    monkeypatch.setattr(main_module, "restore_persisted_proxy_state", lambda: True)
+    monkeypatch.setattr(main_module, "parse_args", lambda: types.SimpleNamespace(debug="none"))
+    monkeypatch.setattr(main_module, "get_platform", lambda: "lin")
+    monkeypatch.setattr(main_module, "is_admin", lambda: False)
+    monkeypatch.setattr(main_module, "acquire_app_lock", lambda: True)
+    monkeypatch.setattr(main_module, "_run_gui", lambda: 9)
+    assert main_module.main() == 9
 
 
 @pytest.mark.unit
@@ -105,23 +123,25 @@ def test_main_gui_stage_runs_gui_when_lock_acquired(monkeypatch: pytest.MonkeyPa
 
 
 @pytest.mark.unit
-def test_main_non_gui_stops_mitm_on_preflight_failure(
+def test_main_non_gui_does_not_start_mitm_on_preflight_failure(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     class _BootstrapFake:
         def __init__(self, debug_enabled: bool) -> None:
             self.debug_enabled = debug_enabled
 
-        def _dispatch(self, on_signal, argv, stage_env, stage_gui):
+        def run_preflight_checks(self, argv, stage_env, stage_gui):
             return BootstrapResult(
                 signal=BootstrapSignal.ERROR, code=2, message="nope"
             )
 
     class _MitmRunnerFake:
         def __init__(self) -> None:
+            self.started = False
             self.stopped = False
 
         def start(self) -> bool:
+            self.started = True
             return True
 
         def stop_by_pid(self) -> bool:
@@ -135,9 +155,15 @@ def test_main_non_gui_stops_mitm_on_preflight_failure(
     monkeypatch.setattr(main_module, "parse_args", lambda: types.SimpleNamespace(debug="none"))
     monkeypatch.setattr(main_module, "Bootstrap", _BootstrapFake)
     monkeypatch.setattr(main_module, "MitmproxyRunner", lambda *_args, **_kwargs: runner)
+    bootstrap_results: list[BootstrapResult] = []
+    monkeypatch.setattr(
+        main_module, "_log_bootstrap_result", bootstrap_results.append
+    )
     rc = main_module.main()
     assert rc == 2
-    assert runner.stopped is True
+    assert runner.started is False
+    assert runner.stopped is False
+    assert len(bootstrap_results) == 1
 
 
 @pytest.mark.unit
@@ -152,7 +178,13 @@ def test_main_non_gui_passes_fit_web_caller_when_supported(
             self.caller = caller
             _BootstrapFake.last_instance = self
 
-        def _dispatch(self, on_signal, argv, stage_env, stage_gui):
+        def run_preflight_checks(self, argv, stage_env, stage_gui):
+            return None
+
+        def _dispatch(
+            self, on_signal, argv, stage_env, stage_gui, preflight_completed
+        ):
+            assert preflight_completed is True
             return BootstrapResult(signal=BootstrapSignal.OK, code=0, message="")
 
     runner = types.SimpleNamespace(start=lambda: True, stop_by_pid=lambda: True)
@@ -175,6 +207,13 @@ def test_main_non_gui_passes_fit_web_caller_when_supported(
 def test_main_non_gui_returns_one_when_mitm_start_fails(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
+    class _BootstrapFake:
+        def __init__(self, debug_enabled: bool, caller=None) -> None:
+            pass
+
+        def run_preflight_checks(self, argv, stage_env, stage_gui):
+            return None
+
     runner = types.SimpleNamespace(start=lambda: False)
     monkeypatch.delenv("FIT_MITM_LAUNCH", raising=False)
     monkeypatch.setenv(main_module.STAGE_ENV, "ENV_STAGE")
@@ -182,6 +221,7 @@ def test_main_non_gui_returns_one_when_mitm_start_fails(
     monkeypatch.setattr(
         main_module, "parse_args", lambda: types.SimpleNamespace(debug="none")
     )
+    monkeypatch.setattr(main_module, "Bootstrap", _BootstrapFake)
     monkeypatch.setattr(main_module, "MitmproxyRunner", lambda *_args, **_kwargs: runner)
     assert main_module.main() == 1
 

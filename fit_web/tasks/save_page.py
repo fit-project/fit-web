@@ -15,6 +15,7 @@ import sys
 import tempfile
 import types
 from importlib.metadata import PackageNotFoundError, version as package_version
+from urllib.parse import urlsplit, urlunsplit
 
 from fit_acquisition.tasks.task import Task
 from fit_acquisition.tasks.task_worker import TaskWorker
@@ -71,7 +72,7 @@ class TaskSavePageWorker(TaskWorker):
         if not har_path or not os.path.exists(har_path):
             raise FileNotFoundError("capture.har not found")
         debug(f"ℹ️ capture.har: {har_path}", context=get_context(self))
-        page_url = self.options.get("url")
+        page_url = self._normalize_http_url(self.options.get("url"))
         with tempfile.TemporaryDirectory(
             prefix="fit_wacz_", dir=self.acquisition_directory
         ) as temp_dir:
@@ -110,6 +111,16 @@ class TaskSavePageWorker(TaskWorker):
                     disable_post_append=True,
                     page_url=page_url,
                 )
+            except ValueError as e:
+                if not page_url or "not found in index" not in str(e):
+                    raise
+                debug(
+                    "⚠️ WACZ seed was not found in the index; "
+                    "retrying with automatic page detection",
+                    str(e),
+                    context=get_context(self),
+                )
+                result = self._create_wacz(warc_path, wacz_path)
             if result not in (0, None):
                 raise RuntimeError(f"WACZ creation failed (code={result})")
             debug(f"✅ WACZ created: {wacz_path}", context=get_context(self))
@@ -164,10 +175,34 @@ class TaskSavePageWorker(TaskWorker):
 
         sanitized_data, replacements = TaskSavePageWorker._sanitize_har_value(har_data)
 
+        # py-wacz normalizes an origin URL with an empty path to ``/`` before
+        # looking it up in the CDX index.  har2warc preserves the URL exactly,
+        # so normalize HAR request URLs the same way or seeds such as
+        # https://example.com can never match https://example.com/.
+        for entry in sanitized_data.get("log", {}).get("entries", []):
+            request = entry.get("request", {})
+            url = request.get("url")
+            normalized_url = TaskSavePageWorker._normalize_http_url(url)
+            if normalized_url != url:
+                request["url"] = normalized_url
+                replacements += 1
+
         with open(target_path, "w", encoding="utf-8") as har_file:
             json.dump(sanitized_data, har_file, ensure_ascii=False)
 
         return replacements
+
+    @staticmethod
+    def _normalize_http_url(url: str | None) -> str | None:
+        if not url:
+            return url
+        try:
+            parts = urlsplit(url)
+        except ValueError:
+            return url
+        if parts.scheme not in ("http", "https") or not parts.netloc or parts.path:
+            return url
+        return urlunsplit(parts._replace(path="/"))
 
     @staticmethod
     def _sanitize_har_value(value):

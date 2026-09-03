@@ -21,6 +21,7 @@ from pathlib import Path
 from fit_bootstrap.constants import (
     FIT_DEBUG_ENABLED,
     FIT_LOG_APP_PATH,
+    FIT_MITM_CONF_DIR,
     FIT_MITM_PORT,
     FIT_USER_APP_PATH,
 )
@@ -39,11 +40,33 @@ class MitmproxyRunner:
             self.pid_file = None
             self.har_file = None
             self.control_file = None
+            self.export_status_file = None
             return
         self.output_dir = Path(base_path) / "mitmproxy"
         self.pid_file = self.output_dir / "mitmproxy.pid"
         self.har_file = self.output_dir / "capture.har"
         self.control_file = self.output_dir / "capture.control"
+        self.export_status_file = self.output_dir / "capture.export-status"
+
+    def _linux_conf_dir(self) -> Path | None:
+        if sys.platform != "linux":
+            return None
+        configured = os.environ.get(FIT_MITM_CONF_DIR)
+        if not configured or self.output_dir is None:
+            debug(
+                f"❌ {FIT_MITM_CONF_DIR} not set; cannot start mitmproxy on Linux",
+                context=get_context(self),
+            )
+            return None
+        conf_dir = Path(configured).expanduser().resolve()
+        expected = (self.output_dir / "conf").resolve()
+        if conf_dir != expected or not conf_dir.is_dir():
+            debug(
+                f"❌ Invalid {FIT_MITM_CONF_DIR}: {conf_dir}",
+                context=get_context(self),
+            )
+            return None
+        return conf_dir
 
     def start(self) -> subprocess.Popen[str] | None:
         if self.output_dir is None or self.pid_file is None or self.har_file is None:
@@ -63,6 +86,10 @@ class MitmproxyRunner:
             )
             return None
         self._reset_capture_files()
+
+        conf_dir = self._linux_conf_dir()
+        if sys.platform == "linux" and conf_dir is None:
+            return None
 
         existing_pid = self._read_pid()
         if existing_pid:
@@ -120,9 +147,9 @@ class MitmproxyRunner:
             *base_cmd,
             "-s",
             str(Path(__file__).parent / "addons" / "fit_capture.py"),
-            "--set",
-            f"hardump={self.har_file}",
         ]
+        if conf_dir is not None:
+            cmd += ["--set", f"confdir={conf_dir}"]
         mitm_port = os.environ.get(FIT_MITM_PORT)
         if mitm_port:
             try:
@@ -144,6 +171,7 @@ class MitmproxyRunner:
                 env.update(extra_env)
             env["FIT_CAPTURE_CONTROL"] = str(self.control_file)
             env["FIT_CAPTURE_HAR"] = str(self.har_file)
+            env["FIT_CAPTURE_EXPORT_STATUS"] = str(self.export_status_file)
             proc = subprocess.Popen(
                 cmd,
                 stdout=stdout,
@@ -232,10 +260,36 @@ class MitmproxyRunner:
         return True
 
     def start_capture(self) -> bool:
+        self._clear_export_status()
         return self._write_control("start")
 
-    def stop_capture(self) -> bool:
-        return self._write_control("stop")
+    def stop_capture(self, timeout: float = 10.0) -> bool:
+        self._clear_export_status()
+        token = str(time.time_ns())
+        if not self._write_control("stop", token):
+            return False
+        deadline = time.monotonic() + timeout
+        while time.monotonic() < deadline:
+            try:
+                if self.export_status_file is not None:
+                    status = self.export_status_file.read_text().strip()
+                    if status == f"{token}:ok":
+                        debug("✅ HAR export completed", context=get_context(self))
+                        return True
+                    if status == f"{token}:error":
+                        debug("❌ HAR export failed", context=get_context(self))
+                        return False
+            except FileNotFoundError:
+                pass
+            except OSError as exc:
+                debug(
+                    f"❌ Unable to read HAR export status: {exc}",
+                    context=get_context(self),
+                )
+                return False
+            time.sleep(0.05)
+        debug("❌ Timed out waiting for HAR export", context=get_context(self))
+        return False
 
     def _write_pid(self, pid: int) -> None:
         try:
@@ -264,12 +318,13 @@ class MitmproxyRunner:
         except OSError:
             pass
 
-    def _write_control(self, command: str) -> bool:
+    def _write_control(self, command: str, token: str | None = None) -> bool:
         try:
             if self.control_file is None:
                 return False
             self.control_file.parent.mkdir(parents=True, exist_ok=True)
-            self.control_file.write_text(command)
+            instruction = f"{command}:{token or time.time_ns()}"
+            self.control_file.write_text(instruction)
             debug(f"ℹ️ Capture control: {command}", context=get_context(self))
             return True
         except OSError as exc:
@@ -277,6 +332,16 @@ class MitmproxyRunner:
                 f"❌ Unable to write capture control: {exc}", context=get_context(self)
             )
             return False
+
+    def _clear_export_status(self) -> None:
+        try:
+            if self.export_status_file is not None:
+                self.export_status_file.unlink(missing_ok=True)
+        except OSError as exc:
+            debug(
+                f"❌ Unable to reset HAR export status: {exc}",
+                context=get_context(self),
+            )
 
     def _reset_capture_files(self) -> None:
         if self.har_file is not None:
@@ -296,3 +361,4 @@ class MitmproxyRunner:
                     f"❌ Unable to reset capture.control: {exc}",
                     context=get_context(self),
                 )
+        self._clear_export_status()

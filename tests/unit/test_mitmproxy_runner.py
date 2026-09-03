@@ -2,6 +2,8 @@ from __future__ import annotations
 
 import signal
 import subprocess
+import threading
+import time
 from pathlib import Path
 
 import pytest
@@ -27,6 +29,49 @@ def test_write_control_returns_false_without_control_file(
     runner = MitmproxyRunner()
     assert runner.start_capture() is False
     assert runner.stop_capture() is False
+
+
+@pytest.mark.unit
+def test_stop_capture_waits_for_matching_export_ack(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    monkeypatch.setenv("FIT_USER_APP_PATH", str(tmp_path))
+    runner = MitmproxyRunner()
+
+    def _acknowledge() -> None:
+        assert runner.control_file is not None
+        assert runner.export_status_file is not None
+        deadline = time.monotonic() + 1
+        while not runner.control_file.exists() and time.monotonic() < deadline:
+            time.sleep(0.005)
+        token = runner.control_file.read_text().partition(":")[2]
+        runner.export_status_file.write_text(f"{token}:ok")
+
+    thread = threading.Thread(target=_acknowledge)
+    thread.start()
+    assert runner.stop_capture(timeout=1) is True
+    thread.join()
+
+
+@pytest.mark.unit
+def test_stop_capture_fails_on_export_error(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    monkeypatch.setenv("FIT_USER_APP_PATH", str(tmp_path))
+    runner = MitmproxyRunner()
+
+    def _acknowledge() -> None:
+        assert runner.control_file is not None
+        assert runner.export_status_file is not None
+        while not runner.control_file.exists():
+            time.sleep(0.005)
+        token = runner.control_file.read_text().partition(":")[2]
+        runner.export_status_file.write_text(f"{token}:error")
+
+    thread = threading.Thread(target=_acknowledge)
+    thread.start()
+    assert runner.stop_capture(timeout=1) is False
+    thread.join()
 
 
 @pytest.mark.unit
@@ -82,6 +127,9 @@ def test_start_returns_none_if_subprocess_exits_immediately(
     monkeypatch: pytest.MonkeyPatch, tmp_path: Path
 ) -> None:
     monkeypatch.setenv("FIT_USER_APP_PATH", str(tmp_path))
+    conf_dir = tmp_path / "mitmproxy" / "conf"
+    conf_dir.mkdir(parents=True)
+    monkeypatch.setenv("FIT_MITM_CONF_DIR", str(conf_dir))
     monkeypatch.setenv("FIT_MITM_PORT", "9090")
 
     class _Proc:
@@ -104,7 +152,12 @@ def test_start_returns_none_if_subprocess_exits_immediately(
 @pytest.mark.unit
 def test_start_writes_pid_on_success(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
     monkeypatch.setenv("FIT_USER_APP_PATH", str(tmp_path))
+    conf_dir = tmp_path / "mitmproxy" / "conf"
+    conf_dir.mkdir(parents=True)
+    monkeypatch.setenv("FIT_MITM_CONF_DIR", str(conf_dir))
     monkeypatch.setenv("FIT_MITM_PORT", "9090")
+
+    popen_calls: list[list[str]] = []
 
     class _Proc:
         pid = 555
@@ -115,15 +168,21 @@ def test_start_writes_pid_on_success(monkeypatch: pytest.MonkeyPatch, tmp_path: 
             return None
 
     monkeypatch.setattr("fit_web.mitmproxy.runner.time.sleep", lambda _s: None)
-    monkeypatch.setattr(
-        "fit_web.mitmproxy.runner.subprocess.Popen",
-        lambda *args, **kwargs: _Proc(),
-    )
+    def _popen(cmd, **_kwargs):
+        popen_calls.append(cmd)
+        return _Proc()
+
+    monkeypatch.setattr("fit_web.mitmproxy.runner.subprocess.Popen", _popen)
     runner = MitmproxyRunner()
     proc = runner.start()
     assert proc is not None
     assert runner.pid_file is not None
     assert runner.pid_file.read_text(encoding="utf-8").strip() == "555"
+    assert not any(argument.startswith("hardump=") for argument in popen_calls[0])
+    assert ["--set", f"confdir={conf_dir.resolve()}"] == popen_calls[0][
+        popen_calls[0].index(f"confdir={conf_dir.resolve()}") - 1 :
+        popen_calls[0].index(f"confdir={conf_dir.resolve()}") + 1
+    ]
 
 
 @pytest.mark.unit
@@ -131,6 +190,9 @@ def test_start_kills_existing_pid_before_restarting(
     monkeypatch: pytest.MonkeyPatch, tmp_path: Path
 ) -> None:
     monkeypatch.setenv("FIT_USER_APP_PATH", str(tmp_path))
+    conf_dir = tmp_path / "mitmproxy" / "conf"
+    conf_dir.mkdir(parents=True)
+    monkeypatch.setenv("FIT_MITM_CONF_DIR", str(conf_dir))
 
     class _Proc:
         pid = 999
@@ -159,6 +221,34 @@ def test_start_kills_existing_pid_before_restarting(
     assert runner.start() is not None
     assert (321, 0) in kill_calls
     assert (321, signal.SIGKILL) in kill_calls
+
+
+@pytest.mark.unit
+def test_start_rejects_missing_linux_conf_dir(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    monkeypatch.setenv("FIT_USER_APP_PATH", str(tmp_path))
+    monkeypatch.delenv("FIT_MITM_CONF_DIR", raising=False)
+    popen_calls: list[bool] = []
+    monkeypatch.setattr(
+        "fit_web.mitmproxy.runner.subprocess.Popen",
+        lambda *_args, **_kwargs: popen_calls.append(True),
+    )
+
+    assert MitmproxyRunner().start() is None
+    assert popen_calls == []
+
+
+@pytest.mark.unit
+def test_start_rejects_linux_conf_dir_outside_app_path(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    monkeypatch.setenv("FIT_USER_APP_PATH", str(tmp_path))
+    outside = tmp_path / "other-conf"
+    outside.mkdir()
+    monkeypatch.setenv("FIT_MITM_CONF_DIR", str(outside))
+
+    assert MitmproxyRunner().start() is None
 
 
 @pytest.mark.unit

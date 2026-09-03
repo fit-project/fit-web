@@ -44,7 +44,7 @@ def test_get_proxy_manager_for_windows(monkeypatch: pytest.MonkeyPatch) -> None:
 
 @pytest.mark.unit
 def test_get_proxy_manager_for_linux(monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.setattr(proxy_setup, "get_platform", lambda: "linux")
+    monkeypatch.setattr(proxy_setup, "get_platform", lambda: "lin")
     manager = proxy_setup.get_proxy_manager()
     assert manager.__class__.__name__ == "LinuxProxyManager"
 
