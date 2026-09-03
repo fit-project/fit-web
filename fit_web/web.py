@@ -95,6 +95,7 @@ class Web(Scraper):
             self.__find_bar: FindBar | None = None
             self.__open_dialogs: set[QtWidgets.QWidget] = set()
             self.__move_window_locked = False
+            self.__webview_tabs_hidden_for_overlay = False
             self.__init_ui()
             self.__enable_all()
             self.__add_new_tab(
@@ -288,6 +289,7 @@ class Web(Scraper):
                     # Force a fresh navigation so mitm can attach to acquisition traffic.
                     self.__force_capture_reload()
 
+                    self.__hide_linux_webview_for_overlay()
                     super().execute_start_tasks_flow()
 
                     self.__enable_all()
@@ -379,7 +381,10 @@ class Web(Scraper):
             "ℹ️ Finished executing all tasks in the start_tasks list of Acquisition.",
             context=get_context(self),
         )
-        return super().on_start_tasks_finished()
+        try:
+            return super().on_start_tasks_finished()
+        finally:
+            self.__restore_linux_webview_after_overlay()
 
     def on_stop_tasks_finished(self):
         debug(
@@ -390,6 +395,10 @@ class Web(Scraper):
         return super().on_stop_tasks_finished()
 
     def execute_stop_tasks_flow(self):
+        # The full-page screenshot has completed before this callback runs.
+        # Hiding the native Linux WebView now lets the Qt TasksInfo overlay
+        # cover the entire window without affecting the captured image.
+        self.__hide_linux_webview_for_overlay()
         self.tasks_info.show()
         loop = QtCore.QEventLoop()
         QtCore.QTimer.singleShot(500, loop.quit)
@@ -407,8 +416,38 @@ class Web(Scraper):
         self.__move_window_locked = False
 
         self.__enable_all()
+        # Scraper keeps TasksInfo visible for another three seconds. Restore
+        # the native WebView only after that overlay has closed.
+        QtCore.QTimer.singleShot(3000, self.__restore_linux_webview_after_overlay)
 
     # END ACQUISITON EVENTS
+
+    def __hide_linux_webview_for_overlay(self) -> None:
+        if get_platform() != "lin":
+            return
+        if getattr(self, "_Web__webview_tabs_hidden_for_overlay", False):
+            return
+        tabs = getattr(getattr(self, "ui", None), "tabs", None)
+        if tabs is None or not tabs.isVisible():
+            return
+        tabs.hide()
+        self.__webview_tabs_hidden_for_overlay = True
+        debug(
+            "ℹ️ Linux WebView hidden behind execution overlay",
+            context=get_context(self),
+        )
+
+    def __restore_linux_webview_after_overlay(self) -> None:
+        if not getattr(self, "_Web__webview_tabs_hidden_for_overlay", False):
+            return
+        tabs = getattr(getattr(self, "ui", None), "tabs", None)
+        if tabs is not None:
+            tabs.show()
+        self.__webview_tabs_hidden_for_overlay = False
+        debug(
+            "✅ Linux WebView restored after execution overlay",
+            context=get_context(self),
+        )
 
     # START LOCAL ACQUISITON METHODS
     def __take_screenshot_visible_area(self):

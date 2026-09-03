@@ -73,6 +73,7 @@ class _FakeTabs:
         self.widgets = widgets
         self.removed_indexes: list[int] = []
         self.current_indexes: list[int] = []
+        self.visible = True
 
     def count(self) -> int:
         return len(self.widgets)
@@ -88,6 +89,15 @@ class _FakeTabs:
 
     def removeTab(self, index: int) -> None:
         self.removed_indexes.append(index)
+
+    def isVisible(self) -> bool:
+        return self.visible
+
+    def hide(self) -> None:
+        self.visible = False
+
+    def show(self) -> None:
+        self.visible = True
 
 
 def _build_web_stub():
@@ -328,6 +338,41 @@ def test_start_stop_mitm_capture_wrappers() -> None:
     )
     assert web._Web__start_mitm_capture() is True
     assert web._Web__stop_mitm_capture() is True
+
+
+@pytest.mark.unit
+def test_linux_webview_is_hidden_and_restored_for_overlay(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    web = _build_web_stub()
+    tabs = _FakeTabs([object()])
+    web.ui.tabs = tabs
+    monkeypatch.setattr(web_module, "get_platform", lambda: "lin")
+
+    web._Web__hide_linux_webview_for_overlay()
+    web._Web__hide_linux_webview_for_overlay()
+    assert tabs.visible is False
+    assert web._Web__webview_tabs_hidden_for_overlay is True
+
+    web._Web__restore_linux_webview_after_overlay()
+    web._Web__restore_linux_webview_after_overlay()
+    assert tabs.visible is True
+    assert web._Web__webview_tabs_hidden_for_overlay is False
+
+
+@pytest.mark.unit
+def test_webview_overlay_workaround_is_linux_only(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    web = _build_web_stub()
+    tabs = _FakeTabs([object()])
+    web.ui.tabs = tabs
+    monkeypatch.setattr(web_module, "get_platform", lambda: "macos")
+
+    web._Web__hide_linux_webview_for_overlay()
+
+    assert tabs.visible is True
+    assert getattr(web, "_Web__webview_tabs_hidden_for_overlay", False) is False
 
 
 @pytest.mark.unit
