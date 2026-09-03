@@ -32,8 +32,6 @@
     "OS_PROXY_CONFIG_ERROR_MESSAGE": "Impossibile configurare il proxy del sistema operativo; interruzione dell'avvio dell'acquisizione",
     "MITM_PROXY_ERROR_TITLE": "Errore MITM Proxy",
     "MITM_PROXY_ERROR_MESSAGE": "Impossibile avviare la cattura mitm; ripristino del proxy del sistema operativo e interruzione dell'acquisizione",
-    "HTTP_HTTPS_DISCLAIMER_TITLE": "Avviso acquisizione",
-    "HTTP_HTTPS_DISCLAIMER_MESSAGE": "Durante l'acquisizione, FIT Web puo catturare traffico HTTP/HTTPS generato anche da altre finestre o applicazioni aperte. Chiudi tutte le finestre e applicazioni non pertinenti prima di continuare.",
     "UNSUPPORTED_OS_DIALOG_TITLE": "FIT Web Errore OS",
     "UNSUPPORTED_OS_DIALOG_MESSAGE": "Sistema operativo non supportato. <br><br><strong style=\"color:red\">FIT Web in questa versione è compatibile solo con macOS</strong>",
     "OS_VERSION_ERROR_DIALOG_TITLE": "Versione {} non supportata",
