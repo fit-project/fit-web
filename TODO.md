@@ -8,8 +8,6 @@
 - TODO dovrò bloccare su il bundle fit lo scraper fit-web se non usi un macOS
 
 - TODO fit-webview-bridge non deve funzionare più con python 3.11
-- TODO devo sistemare finestra richiesta password nel boostrap per lin
-- TODO mi serve un README che spiega come rimuovere CA linux
 
 - TODO CLOUD:
   - Non sarà necessario acquisire privelegi da capire lo stiky

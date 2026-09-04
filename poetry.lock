@@ -1195,7 +1195,7 @@ fit-common = {git = "https://github.com/fit-project/fit-common.git", branch = "m
 type = "git"
 url = "https://github.com/fit-project/fit-bootstrap.git"
 reference = "main"
-resolved_reference = "e29def05e16545eee585c0f04064699814360584"
+resolved_reference = "252ea576b532a9d089b8f3987c3664de23a47712"
 
 [[package]]
 name = "fit-cases"
